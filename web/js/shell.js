@@ -31,6 +31,7 @@ export function initShell(state, syncBoard) {
   const shortcutButtons = [...document.querySelectorAll('.shortcut-button')];
 
   let pending = false;
+  let activeDemo = null;
 
   function engine() {
     return state.engine;
@@ -86,25 +87,24 @@ export function initShell(state, syncBoard) {
   function syncPrompt() {
     promptLabel.textContent = engine().isPickingMove() ? 'Pick a number:' : '>';
     for (const button of shortcutButtons) {
-      button.classList.toggle('active', button.dataset.command?.startsWith('demo') && false);
+      button.classList.toggle('active', button.dataset.command === activeDemo);
     }
   }
 
   function renderResult(result) {
     switch (result.kind) {
       case 'state':
+        if (result.action !== 'moves') activeDemo = null;
         syncBoard();
         appendBlock(renderGame(engine().getGame()));
         setStatus(`Action: ${result.action}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'demo':
+        activeDemo = result.id;
         syncBoard();
         appendBlock(result.description);
         appendBlock(renderGame(engine().getGame()));
         setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
-        for (const button of shortcutButtons) {
-          button.classList.toggle('active', button.dataset.command === result.id);
-        }
         break;
       case 'help':
         appendBlock(HELP);
@@ -165,6 +165,7 @@ export function initShell(state, syncBoard) {
         }
         break;
       case 'quit':
+        activeDemo = null;
         state.engine = new state.engine.constructor();
         syncBoard();
         appendBlock('Bye.');

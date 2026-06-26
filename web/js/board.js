@@ -6,14 +6,29 @@ import { trace } from './debug.js';
 // itself — every move is handed to the shell as a command for it to validate.
 export function initBoard(state, shell) {
   const boardElement = document.querySelector('.board');
+  boardElement.setAttribute('role', 'group');
+
   const cellByNotation = new Map();
   let movable = new Set();
   let selected = null;
   let selectedCell = null;
 
+  function describeCell(board, pos, notation) {
+    if (!board.isOccupied(pos)) {
+      return `${notation}, empty square`;
+    }
+
+    const color = board.isBlackPiece(pos) ? 'black' : 'white';
+    const type = board.isDamePiece(pos) ? 'king' : 'piece';
+    const moveState = movable.has(notation) ? ', movable' : '';
+    return `${notation}, ${color} ${type}${moveState}`;
+  }
+
   function clearHints() {
     for (const cell of cellByNotation.values()) {
       cell.classList.remove('hint');
+      cell.removeAttribute('aria-current');
+      cell.setAttribute('aria-label', cell.dataset.label ?? '');
     }
   }
 
@@ -21,15 +36,22 @@ export function initBoard(state, shell) {
     selected = pos;
     selectedCell = cell;
     cell.classList.add('selected');
+    cell.setAttribute('aria-pressed', 'true');
+    cell.setAttribute('aria-label', `${cell.dataset.label}, selected`);
     const targets = shell.targetsFrom(pos.toString());
     for (const target of targets) {
-      cellByNotation.get(target)?.classList.add('hint');
+      const targetCell = cellByNotation.get(target);
+      targetCell?.classList.add('hint');
+      targetCell?.setAttribute('aria-current', 'true');
+      targetCell?.setAttribute('aria-label', `${targetCell.dataset.label}, legal target`);
     }
     trace('board', 'select', pos.toString(), { targets });
   }
 
   function clearSelection() {
     selectedCell?.classList.remove('selected');
+    selectedCell?.removeAttribute('aria-pressed');
+    selectedCell?.setAttribute('aria-label', selectedCell.dataset.label ?? '');
     clearHints();
     selected = null;
     selectedCell = null;
@@ -71,6 +93,13 @@ export function initBoard(state, shell) {
     shell.submit(command);
   }
 
+  function handleCellKeydown(event, pos, cell) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    handleCellClick(pos, cell);
+  }
+
   function syncBoard() {
     selected = null;
     selectedCell = null;
@@ -83,25 +112,37 @@ export function initBoard(state, shell) {
 
     for (let row = 0; row < Position.BOARD_SIZE; row++) {
       for (let col = 0; col < Position.BOARD_SIZE; col++) {
-        const cell = document.createElement('div');
         const isValid = Position.isValid(col, row);
+        const cell = document.createElement(isValid ? 'button' : 'div');
         cell.className = `cell ${isValid ? 'dark' : 'light'}`;
 
         if (isValid) {
           const pos = Position.fromCoords(col, row);
           const notation = pos.toString();
+          const label = describeCell(board, pos, notation);
+          cell.type = 'button';
           cell.dataset.notation = notation;
+          cell.dataset.label = label;
+          cell.setAttribute('aria-label', label);
           cellByNotation.set(notation, cell);
           if (board.isOccupied(pos)) {
             cell.classList.add('piece', board.isBlackPiece(pos) ? 'black' : 'white');
             if (board.isDamePiece(pos)) {
               cell.classList.add('king');
+              const crown = document.createElement('span');
+              crown.className = 'king-marker';
+              crown.setAttribute('aria-hidden', 'true');
+              crown.textContent = 'K';
+              cell.append(crown);
             }
           }
           if (movable.has(notation)) {
             cell.classList.add('movable');
           }
           cell.addEventListener('click', () => handleCellClick(pos, cell));
+          cell.addEventListener('keydown', (event) => handleCellKeydown(event, pos, cell));
+        } else {
+          cell.setAttribute('aria-hidden', 'true');
         }
 
         cells.push(cell);
