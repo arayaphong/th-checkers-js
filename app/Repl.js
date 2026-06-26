@@ -1,6 +1,5 @@
 // The interactive REPL loop: render the position, read a line, parse it,
-// dispatch the action, repeat. Owns the Game instance and a redo stack so the
-// user can step backward and forward through a line in analysis mode.
+// dispatch the action through the UI-neutral Engine, repeat.
 //
 // Input is consumed via readline's async iterator (`for await ... of rl`) rather
 // than one-shot `question()` calls. The iterator buffers lines correctly for
@@ -10,13 +9,7 @@
 import { createInterface } from 'node:readline';
 import { stdin, stdout } from 'node:process';
 
-import { Game } from '../core/Game.js';
-import {
-  createDemo1Game, explainDemo1,
-  createDemo2Game, explainDemo2,
-  createDemo3Game, explainDemo3,
-  createDemo4Game, explainDemo4,
-} from './demo/index.js';
+import { Engine } from './Engine.js';
 import { parseInput } from './parse.js';
 import { formatMove, formatTrace, renderGame } from './render.js';
 
@@ -39,28 +32,24 @@ Demos (load a preset position):
   demo4             dame loop capture with extra central branching`;
 
 export class Repl {
-  #game;
-  /** Move indices that were undone, newest last; consumed by 'redo'. */
-  #redoStack = [];
-  /** When set, the next input line picks among these move indices (disambiguation). */
-  #pendingPick = null;
+  #engine;
   #rl;
   #output;
 
   /**
    * @param {import('node:stream').Readable} [input]
    * @param {import('node:stream').Writable} [output]
-   * @param {Game} [game]
+   * @param {import('../core/Game.js').Game} [game]
    */
   constructor(input = stdin, output = stdout, game) {
     this.#rl = createInterface({ input, output });
     this.#output = output;
-    this.#game = game ?? new Game();
+    this.#engine = new Engine(game);
   }
 
   async run() {
     this.#rl.on('SIGINT', () => this.#rl.close());
-    this.#print(renderGame(this.#game));
+    this.#print(renderGame(this.#engine.getGame()));
     this.#writePrompt();
 
     try {
@@ -77,217 +66,78 @@ export class Repl {
 
   /** Process one input line. Returns true if the loop should exit. */
   #handleLine(raw) {
-    if (this.#pendingPick) {
-      this.#resolvePick(raw);
-      return false;
-    }
+    const result = this.#engine.isPickingMove()
+      ? this.#engine.resolvePick(raw)
+      : this.#engine.handle(parseInput(raw));
 
-    const parsed = parseInput(raw);
-    switch (parsed.kind) {
-      case 'empty':
-        this.#print(renderGame(this.#game));
-        return false;
-      case 'command':
-        if (parsed.name === 'quit') return true;
-        this.#runCommand(parsed.name);
-        return false;
-      case 'index':
-        this.#applyIndex(parsed.value);
-        return false;
-      case 'coords':
-        this.#applyCoords(parsed.from, parsed.to);
-        return false;
-      case 'trace-index':
-        this.#traceIndex(parsed.index);
-        return false;
-      case 'trace-coords':
-        this.#traceCoords(parsed.from, parsed.to);
-        return false;
-      case 'error':
-        this.#print(parsed.message);
-        return false;
-      default:
-        return false;
-    }
+    if (result.kind === 'quit') return true;
+    this.#renderResult(result);
+    return false;
   }
 
-  /**
-   * @param {import('./parse.js').CommandName} name
-   */
-  #runCommand(name) {
-    switch (name) {
+  #renderResult(result) {
+    switch (result.kind) {
+      case 'state':
+        this.#print(renderGame(this.#engine.getGame()));
+        break;
+      case 'demo':
+        this.#print(result.description);
+        this.#print(renderGame(this.#engine.getGame()));
+        break;
       case 'help':
         this.#print(HELP);
         break;
-      case 'moves':
-        this.#print(renderGame(this.#game));
+      case 'invalid-index':
+        this.#print(`No move #${result.value}. There are ${result.legalMoveCount} legal move(s).`);
         break;
-      case 'undo':
-        this.#undo();
+      case 'no-coordinate-match':
+        this.#print(`No legal move from ${result.from.notation} to ${result.to.notation}.`);
         break;
-      case 'redo':
-        this.#redo();
+      case 'pick-required':
+        this.#print(`Multiple moves match ${result.from.notation} -> ${result.to.notation}:`);
+        result.choices.forEach((choice, index) => {
+          this.#print(`  ${index + 1}) ${formatMove(this.#moveAt(choice.index))}`);
+        });
         break;
-      case 'new':
-        this.#game = new Game();
-        this.#redoStack = [];
-        this.#print(renderGame(this.#game));
+      case 'trace':
+        this.#print(formatTrace(this.#moveAt(result.move.index)));
         break;
-      case 'demo1':
-        this.#game = createDemo1Game();
-        this.#redoStack = [];
-        this.#print(explainDemo1());
-        this.#print(renderGame(this.#game));
+      case 'trace-list':
+        this.#print(`Trace(s) for ${result.from.notation} -> ${result.to.notation}:`);
+        result.moves.forEach((move, index) => {
+          this.#print(`  ${index + 1}) ${formatTrace(this.#moveAt(move.index))}`);
+        });
         break;
-      case 'demo2':
-        this.#game = createDemo2Game();
-        this.#redoStack = [];
-        this.#print(explainDemo2());
-        this.#print(renderGame(this.#game));
+      case 'empty-history':
+        this.#print(result.action === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.');
         break;
-      case 'demo3':
-        this.#game = createDemo3Game();
-        this.#redoStack = [];
-        this.#print(explainDemo3());
-        this.#print(renderGame(this.#game));
+      case 'cancelled':
+        this.#print('Cancelled.');
         break;
-      case 'demo4':
-        this.#game = createDemo4Game();
-        this.#redoStack = [];
-        this.#print(explainDemo4());
-        this.#print(renderGame(this.#game));
+      case 'parse-error':
+        this.#print(result.message);
         break;
-      case 'quit':
-        break; // handled in #handleLine
+      case 'invalid-demo':
+        this.#print(`Unknown demo: "${result.id}". Available: ${result.available.join(', ')}`);
+        break;
+      case 'error':
+        if (result.action === 'redo') {
+          this.#print(`Could not redo: ${result.error.message}`);
+        } else {
+          this.#print(`Could not apply move: ${result.error.message}`);
+        }
+        break;
+      case 'noop':
+        break;
     }
   }
 
-  #applyIndex(value) {
-    const moves = this.#game.getMoves();
-    if (value > moves.length) {
-      this.#print(`No move #${value}. There are ${moves.length} legal move(s).`);
-      return;
-    }
-    this.#commitMove(value - 1);
-  }
-
-  /**
-   * @param {import('../core/Position.js').Position} from
-   * @param {import('../core/Position.js').Position} to
-   */
-  #applyCoords(from, to) {
-    const moves = this.#game.getMoves();
-    const matches = [];
-    moves.forEach((m, i) => {
-      if (m.from.equals(from) && m.to.equals(to)) matches.push(i);
-    });
-
-    if (matches.length === 0) {
-      this.#print(`No legal move from ${from.toString()} to ${to.toString()}.`);
-      return;
-    }
-    if (matches.length === 1) {
-      this.#commitMove(matches[0]);
-      return;
-    }
-
-    // If every match captures the same pieces, the path order does not affect
-    // the outcome; auto-pick the first one instead of asking.
-    const capturedKey = (idx) =>
-      moves[idx].captured
-        .map((p) => p.hash())
-        .sort((a, b) => a - b)
-        .join(',');
-    const firstKey = capturedKey(matches[0]);
-    if (matches.every((idx) => capturedKey(idx) === firstKey)) {
-      this.#commitMove(matches[0]);
-      return;
-    }
-
-    // Same from/to but different captured sets → ask the user to disambiguate.
-    this.#print(`Multiple moves match ${from.toString()} -> ${to.toString()}:`);
-    matches.forEach((idx, n) => this.#print(`  ${n + 1}) ${formatMove(moves[idx])}`));
-    this.#pendingPick = matches;
-  }
-
-  #traceIndex(value) {
-    const moves = this.#game.getMoves();
-    if (value < 1 || value > moves.length) {
-      this.#print(`No move #${value}. There are ${moves.length} legal move(s).`);
-      return;
-    }
-    this.#print(formatTrace(moves[value - 1]));
-  }
-
-  /**
-   * @param {import('../core/Position.js').Position} from
-   * @param {import('../core/Position.js').Position} to
-   */
-  #traceCoords(from, to) {
-    const moves = this.#game.getMoves();
-    const matches = moves.filter((m) => m.from.equals(from) && m.to.equals(to));
-
-    if (matches.length === 0) {
-      this.#print(`No legal move from ${from.toString()} to ${to.toString()}.`);
-      return;
-    }
-
-    this.#print(`Trace(s) for ${from.toString()} -> ${to.toString()}:`);
-    matches.forEach((m, i) => {
-      this.#print(`  ${i + 1}) ${formatTrace(m)}`);
-    });
-  }
-
-  /** Resolve a pending disambiguation pick from the user's input line. */
-  #resolvePick(raw) {
-    const matches = this.#pendingPick;
-    this.#pendingPick = null;
-    const choice = Number(raw.trim());
-    if (!Number.isInteger(choice) || choice < 1 || choice > matches.length) {
-      this.#print('Cancelled.');
-      return;
-    }
-    this.#commitMove(matches[choice - 1]);
-  }
-
-  /** Apply a move by its index into the current move list; resets redo. */
-  #commitMove(index) {
-    try {
-      this.#game.selectMove(index);
-      this.#redoStack = [];
-      this.#print(renderGame(this.#game));
-    } catch (err) {
-      this.#print(`Could not apply move: ${/** @type {Error} */ (err).message}`);
-    }
-  }
-
-  #undo() {
-    const sequence = this.#game.getMoveSequence();
-    if (sequence.length === 0) {
-      this.#print('Nothing to undo.');
-      return;
-    }
-    this.#redoStack.push(sequence[sequence.length - 1]);
-    this.#game.undoMove();
-    this.#print(renderGame(this.#game));
-  }
-
-  #redo() {
-    const index = this.#redoStack.pop();
-    if (index === undefined) {
-      this.#print('Nothing to redo.');
-      return;
-    }
-    try {
-      this.#game.selectMove(index);
-      this.#print(renderGame(this.#game));
-    } catch (err) {
-      this.#print(`Could not redo: ${/** @type {Error} */ (err).message}`);
-    }
+  #moveAt(index) {
+    return this.#engine.getGame().getMoves()[index];
   }
 
   #writePrompt() {
-    this.#output.write(this.#pendingPick ? 'Pick a number: ' : '\n> ');
+    this.#output.write(this.#engine.isPickingMove() ? 'Pick a number: ' : '\n> ');
   }
 
   #print(text) {
