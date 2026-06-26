@@ -217,4 +217,3 @@ export class Board {
         return (this.#occBits ^ this.#blackBits ^ this.#dameBits) >>> 0;
     }
 }
-//# sourceMappingURL=Board.js.map

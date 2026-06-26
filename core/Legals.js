@@ -150,4 +150,3 @@ export class Legals {
         return this.#moves.map(copyMoveInfo)[Symbol.iterator]();
     }
 }
-//# sourceMappingURL=Legals.js.map

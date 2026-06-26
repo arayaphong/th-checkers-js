@@ -164,4 +164,3 @@ export class Explorer {
         return positions;
     }
 }
-//# sourceMappingURL=Explorer.js.map

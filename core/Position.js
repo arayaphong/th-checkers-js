@@ -83,4 +83,3 @@ export class Position {
         return Position.#allValid;
     }
 }
-//# sourceMappingURL=Position.js.map
