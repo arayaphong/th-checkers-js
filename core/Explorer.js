@@ -88,6 +88,11 @@ export class Explorer {
         return color === PieceColor.WHITE ? pos.y === 0 : pos.y === 7;
     }
     #isOpponentPiece(board, pos, myColor) {
+        // Guard occupancy here too: for BLACK, "opponent" is "not black", which
+        // would otherwise wrongly include empty squares.
+        if (!board.isOccupied(pos)) {
+            return false;
+        }
         return myColor === PieceColor.WHITE ? board.isBlackPiece(pos) : !board.isBlackPiece(pos);
     }
     // ─── find all captures in one direction (dame can have multiple landings) ───
