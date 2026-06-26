@@ -6,10 +6,50 @@
   padding: 18px;
 }
 
+.board-layout {
+  --row-axis-size: 24px;
+  --axis-gap: 8px;
+  --board-size: clamp(220px, calc(100vw - 120px), 540px);
+  display: grid;
+  justify-content: center;
+  gap: var(--axis-gap);
+}
+
+.board-main {
+  display: grid;
+  grid-template-columns: var(--row-axis-size) var(--board-size);
+  gap: var(--axis-gap);
+  align-items: stretch;
+}
+
+.axis {
+  font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(159, 197, 255, 0.92);
+  user-select: none;
+}
+
+.axis-col {
+  width: calc(var(--row-axis-size) + var(--axis-gap) + var(--board-size));
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  justify-items: center;
+  padding-left: calc(var(--row-axis-size) + var(--axis-gap));
+}
+
+.axis-row {
+  height: var(--board-size);
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
 .board {
-  width: min(100%, 540px);
+  width: var(--board-size);
   aspect-ratio: 1;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   border-radius: 18px;
@@ -24,11 +64,11 @@
 }
 
 .cell.light {
-  background: #f5d23d;
+  background: #2c4f93;
 }
 
 .cell.dark {
-  background: #070707;
+  background: #05070d;
 }
 
 .cell.hint::after {
