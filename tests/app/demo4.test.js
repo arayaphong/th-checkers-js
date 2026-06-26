@@ -3,15 +3,15 @@ import { describe, expect, test } from '@jest/globals';
 import { createDemo4Game, explainDemo4 } from '../../app/demo/index.js';
 
 describe('createDemo4Game', () => {
-  test('has multiple branching capture sequences', () => {
-    const game = createDemo4Game();
+  test('has multiple branching capture sequences', async () => {
+    const game = await createDemo4Game();
     const moves = game.getMoves();
 
     expect(moves.length).toBeGreaterThan(2);
   });
 
-  test('contains the two simple opposite-direction ring-loop paths', () => {
-    const game = createDemo4Game();
+  test('contains the two simple opposite-direction ring-loop paths', async () => {
+    const game = await createDemo4Game();
     const moves = game.getMoves();
 
     const loopPaths = moves
@@ -26,8 +26,8 @@ describe('createDemo4Game', () => {
     ]);
   });
 
-  test('the two ring-loop paths each capture six pieces and leave E4 untouched', () => {
-    const game = createDemo4Game();
+  test('the two ring-loop paths each capture six pieces and leave E4 untouched', async () => {
+    const game = await createDemo4Game();
     const moves = game.getMoves();
 
     const ringLoopPaths = [
@@ -46,8 +46,8 @@ describe('createDemo4Game', () => {
     }
   });
 
-  test('some sequences capture all seven black pions', () => {
-    const game = createDemo4Game();
+  test('some sequences capture all seven black pions', async () => {
+    const game = await createDemo4Game();
     const moves = game.getMoves();
 
     const fullCaptures = moves.filter((m) => m.captured.length === 7);
@@ -61,8 +61,8 @@ describe('createDemo4Game', () => {
 });
 
 describe('explainDemo4', () => {
-  test('mentions the key squares and both loop directions', () => {
-    const text = explainDemo4();
+  test('mentions the key squares and both loop directions', async () => {
+    const text = await explainDemo4();
     expect(text).toContain('D1');
     expect(text).toContain('C2');
     expect(text).toContain('E2');

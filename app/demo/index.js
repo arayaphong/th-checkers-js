@@ -1,16 +1,10 @@
-// Demo loader: reads JSON demo definitions under app/demo/ and turns them
-// into Game instances and explanatory text.
-
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// Demo loader: reads JSON demo definitions in both Node and browser contexts.
+// Node loads from disk lazily, while browser code fetches the same files.
 
 import { Board } from '../../core/Board.js';
 import { Game } from '../../core/Game.js';
 import { PieceColor, PieceType } from '../../core/Piece.js';
 import { Position } from '../../core/Position.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** @type {Record<string, number>} */
 const COLOR_MAP = {
@@ -32,15 +26,50 @@ const TYPE_MAP = {
  * @property {[string, {color: string, type: string}][]} pieces
  */
 
+/** @type {Map<string, Promise<DemoDefinition>>} */
+const DEMO_CACHE = new Map();
+
+function isNodeRuntime() {
+  return typeof process !== 'undefined' && !!process.versions?.node;
+}
+
 /**
- * Load a demo definition from its JSON file.
+ * @param {URL} url
+ * @returns {Promise<string>}
+ */
+async function readDemoText(url) {
+  if (isNodeRuntime()) {
+    const { readFile } = await import('node:fs/promises');
+    return readFile(url, 'utf8');
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Could not load demo JSON: ${response.status} ${response.statusText}`);
+  }
+  return response.text();
+}
+
+/**
+ * Load a demo definition by id.
  * @param {string} id
- * @returns {DemoDefinition}
+ * @returns {Promise<DemoDefinition>}
  */
 function loadDemoJson(id) {
-  const path = join(__dirname, `${id}.json`);
-  const raw = readFileSync(path, 'utf8');
-  return JSON.parse(raw);
+  if (!DEMO_IDS.includes(id)) {
+    return Promise.reject(new Error(`Unknown demo: ${id}`));
+  }
+
+  let pending = DEMO_CACHE.get(id);
+  if (!pending) {
+    pending = (async () => {
+      const url = new URL(`./${id}.json`, import.meta.url);
+      const raw = await readDemoText(url);
+      return JSON.parse(raw);
+    })();
+    DEMO_CACHE.set(id, pending);
+  }
+  return pending;
 }
 
 /**
@@ -62,51 +91,51 @@ export const DEMO_IDS = ['demo1', 'demo2', 'demo3', 'demo4'];
 /**
  * Create a Game for the given demo id.
  * @param {string} id
- * @returns {Game}
+ * @returns {Promise<Game>}
  */
-export function createDemoGame(id) {
-  const demo = loadDemoJson(id);
+export async function createDemoGame(id) {
+  const demo = await loadDemoJson(id);
   return buildGame(demo);
 }
 
 /**
  * Return the explanatory text for the given demo id.
  * @param {string} id
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function explainDemo(id) {
-  const demo = loadDemoJson(id);
+export async function explainDemo(id) {
+  const demo = await loadDemoJson(id);
   return demo.description;
 }
 
 /**
  * Return the title for the given demo id.
  * @param {string} id
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function demoTitle(id) {
-  const demo = loadDemoJson(id);
+export async function demoTitle(id) {
+  const demo = await loadDemoJson(id);
   return demo.title;
 }
 
 // Convenience exports for each demo (keeps existing call sites and tests working).
 
-/** @returns {Game} */
+/** @returns {Promise<Game>} */
 export function createDemo1Game() { return createDemoGame('demo1'); }
-/** @returns {string} */
+/** @returns {Promise<string>} */
 export function explainDemo1() { return explainDemo('demo1'); }
 
-/** @returns {Game} */
+/** @returns {Promise<Game>} */
 export function createDemo2Game() { return createDemoGame('demo2'); }
-/** @returns {string} */
+/** @returns {Promise<string>} */
 export function explainDemo2() { return explainDemo('demo2'); }
 
-/** @returns {Game} */
+/** @returns {Promise<Game>} */
 export function createDemo3Game() { return createDemoGame('demo3'); }
-/** @returns {string} */
+/** @returns {Promise<string>} */
 export function explainDemo3() { return explainDemo('demo3'); }
 
-/** @returns {Game} */
+/** @returns {Promise<Game>} */
 export function createDemo4Game() { return createDemoGame('demo4'); }
-/** @returns {string} */
+/** @returns {Promise<string>} */
 export function explainDemo4() { return explainDemo('demo4'); }

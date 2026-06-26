@@ -54,7 +54,7 @@ export class Repl {
 
     try {
       for await (const raw of this.#rl) {
-        const done = this.#handleLine(raw);
+        const done = await this.#handleLine(raw);
         if (done) break;
         this.#writePrompt();
       }
@@ -65,10 +65,10 @@ export class Repl {
   }
 
   /** Process one input line. Returns true if the loop should exit. */
-  #handleLine(raw) {
+  async #handleLine(raw) {
     const result = this.#engine.isPickingMove()
       ? this.#engine.resolvePick(raw)
-      : this.#engine.handle(parseInput(raw));
+      : await this.#engine.handle(parseInput(raw));
 
     if (result.kind === 'quit') return true;
     this.#renderResult(result);
@@ -123,6 +123,8 @@ export class Repl {
       case 'error':
         if (result.action === 'redo') {
           this.#print(`Could not redo: ${result.error.message}`);
+        } else if (result.action === 'demo') {
+          this.#print(`Could not load demo: ${result.error.message}`);
         } else {
           this.#print(`Could not apply move: ${result.error.message}`);
         }

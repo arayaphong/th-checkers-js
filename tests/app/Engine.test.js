@@ -5,9 +5,9 @@ import { createDemo3Game, createDemo4Game } from '../../app/demo/index.js';
 import { Position } from '../../core/Position.js';
 
 describe('Engine state data', () => {
-  test('moves command returns structured board and move data', () => {
+  test('moves command returns structured board and move data', async () => {
     const engine = new Engine();
-    const result = engine.runCommand('moves');
+    const result = await engine.runCommand('moves');
 
     expect(result.kind).toBe('state');
     expect(result.action).toBe('moves');
@@ -25,8 +25,8 @@ describe('Engine state data', () => {
 });
 
 describe('Engine coordinate moves', () => {
-  test('applies matching coordinates directly when all matches capture the same pieces', () => {
-    const engine = new Engine(createDemo3Game());
+  test('applies matching coordinates directly when all matches capture the same pieces', async () => {
+    const engine = new Engine(await createDemo3Game());
     const result = engine.applyCoords(Position.fromString('D1'), Position.fromString('D1'));
 
     expect(result.kind).toBe('state');
@@ -34,8 +34,8 @@ describe('Engine coordinate moves', () => {
     expect(result.state.gameOver).toBe(true);
   });
 
-  test('returns disambiguation choices when matching coordinates capture different pieces', () => {
-    const engine = new Engine(createDemo4Game());
+  test('returns disambiguation choices when matching coordinates capture different pieces', async () => {
+    const engine = new Engine(await createDemo4Game());
     const result = engine.applyCoords(Position.fromString('D1'), Position.fromString('D1'));
 
     expect(result.kind).toBe('pick-required');

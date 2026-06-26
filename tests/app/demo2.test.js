@@ -3,23 +3,23 @@ import { describe, expect, test } from '@jest/globals';
 import { createDemo2Game, explainDemo2 } from '../../app/demo/index.js';
 
 describe('createDemo2Game', () => {
-  test('has at least one legal move', () => {
-    const game = createDemo2Game();
+  test('has at least one legal move', async () => {
+    const game = await createDemo2Game();
     const moves = game.getMoves();
 
     expect(moves.length).toBeGreaterThan(0);
   });
 
-  test('contains a loop capture that starts and ends on D5', () => {
-    const game = createDemo2Game();
+  test('contains a loop capture that starts and ends on D5', async () => {
+    const game = await createDemo2Game();
     const moves = game.getMoves();
 
     const loopMoves = moves.filter((m) => m.from.toString() === 'D5' && m.to.toString() === 'D5');
     expect(loopMoves.length).toBeGreaterThan(0);
   });
 
-  test('the loop capture captures all four black pions', () => {
-    const game = createDemo2Game();
+  test('the loop capture captures all four black pions', async () => {
+    const game = await createDemo2Game();
     const moves = game.getMoves();
 
     const loopMove = moves.find((m) => m.from.toString() === 'D5' && m.to.toString() === 'D5');
@@ -29,8 +29,8 @@ describe('createDemo2Game', () => {
     expect(capturedSquares).toEqual(['C2', 'C4', 'E2', 'E4']);
   });
 
-  test('contains the expected loop path through the intermediate landings', () => {
-    const game = createDemo2Game();
+  test('contains the expected loop path through the intermediate landings', async () => {
+    const game = await createDemo2Game();
     const moves = game.getMoves();
 
     const expectedPath = [
@@ -47,8 +47,8 @@ describe('createDemo2Game', () => {
 });
 
 describe('explainDemo2', () => {
-  test('mentions the key squares and the loop path', () => {
-    const text = explainDemo2();
+  test('mentions the key squares and the loop path', async () => {
+    const text = await explainDemo2();
     expect(text).toContain('D5');
     expect(text).toContain('C4');
     expect(text).toContain('C2');

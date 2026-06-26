@@ -21,7 +21,7 @@ function runRepl(inputLines, game) {
 
 describe('Repl coordinate input', () => {
   test('applies d1 d1 directly when all matches capture the same pieces', async () => {
-    const output = await runRepl(['d1 d1', 'quit'], createDemo3Game());
+    const output = await runRepl(['d1 d1', 'quit'], await createDemo3Game());
 
     expect(output).toContain('Ply 0 — WHITE to move. 2 legal move(s):');
     expect(output).not.toContain('Multiple moves match D1 -> D1');
@@ -29,7 +29,7 @@ describe('Repl coordinate input', () => {
   });
 
   test('asks for choice when matches capture different pieces', async () => {
-    const output = await runRepl(['d1 d1', '2', 'quit'], createDemo4Game());
+    const output = await runRepl(['d1 d1', '2', 'quit'], await createDemo4Game());
 
     expect(output).toContain('Multiple moves match D1 -> D1');
     expect(output).toContain('Pick a number:');

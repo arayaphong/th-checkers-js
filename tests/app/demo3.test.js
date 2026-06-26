@@ -3,15 +3,15 @@ import { describe, expect, test } from '@jest/globals';
 import { createDemo3Game, explainDemo3 } from '../../app/demo/index.js';
 
 describe('createDemo3Game', () => {
-  test('produces exactly two legal moves', () => {
-    const game = createDemo3Game();
+  test('produces exactly two legal moves', async () => {
+    const game = await createDemo3Game();
     const moves = game.getMoves();
 
     expect(moves).toHaveLength(2);
   });
 
-  test('both moves start and end on D1 and capture the same six pieces', () => {
-    const game = createDemo3Game();
+  test('both moves start and end on D1 and capture the same six pieces', async () => {
+    const game = await createDemo3Game();
     const moves = game.getMoves();
 
     const capturedSet = ['C2', 'C4', 'E2', 'E6', 'G4', 'G6'];
@@ -23,8 +23,8 @@ describe('createDemo3Game', () => {
     }
   });
 
-  test('the two moves are mirror-image paths', () => {
-    const game = createDemo3Game();
+  test('the two moves are mirror-image paths', async () => {
+    const game = await createDemo3Game();
     const moves = game.getMoves();
     const [pathA, pathB] = moves.map((m) => m.path.map((p) => p.toString()));
 
@@ -39,8 +39,8 @@ describe('createDemo3Game', () => {
 });
 
 describe('explainDemo3', () => {
-  test('mentions the key squares and both loop directions', () => {
-    const text = explainDemo3();
+  test('mentions the key squares and both loop directions', async () => {
+    const text = await explainDemo3();
     expect(text).toContain('D1');
     expect(text).toContain('C2');
     expect(text).toContain('E2');

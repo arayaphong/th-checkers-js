@@ -9,7 +9,7 @@ import { createDemoGame, DEMO_IDS } from './demo/index.js';
 import { Repl } from './Repl.js';
 import { pathToFileURL } from 'node:url';
 
-export function resolveGame(arg = process.argv[2]) {
+export async function resolveGame(arg = process.argv[2]) {
   if (!arg) {
     return new Game();
   }
@@ -23,7 +23,7 @@ export function resolveGame(arg = process.argv[2]) {
 }
 
 export async function main(argv = process.argv, ReplClass = Repl) {
-  const game = resolveGame(argv[2]);
+  const game = await resolveGame(argv[2]);
   if (!game) {
     return false;
   }

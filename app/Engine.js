@@ -119,7 +119,7 @@ export class Engine {
   /**
    * @param {import('./parse.js').ParsedInput} parsed
    */
-  handle(parsed) {
+  async handle(parsed) {
     switch (parsed.kind) {
       case 'empty':
         return this.moves();
@@ -143,7 +143,7 @@ export class Engine {
   /**
    * @param {import('./parse.js').CommandName} name
    */
-  runCommand(name) {
+  async runCommand(name) {
     switch (name) {
       case 'help':
         return { kind: 'help' };
@@ -181,20 +181,32 @@ export class Engine {
   /**
    * @param {string} id
    */
-  loadDemo(id) {
+  async loadDemo(id) {
     if (!DEMO_IDS.includes(id)) {
       return { kind: 'invalid-demo', id, available: [...DEMO_IDS] };
     }
 
-    this.#game = createDemoGame(id);
-    this.#redoStack = [];
-    this.#pendingPick = null;
-    return {
-      kind: 'demo',
-      id,
-      description: explainDemo(id),
-      state: this.getState(),
-    };
+    try {
+      const [game, description] = await Promise.all([
+        createDemoGame(id),
+        explainDemo(id),
+      ]);
+      this.#game = game;
+      this.#redoStack = [];
+      this.#pendingPick = null;
+      return {
+        kind: 'demo',
+        id,
+        description,
+        state: this.getState(),
+      };
+    } catch (err) {
+      return {
+        kind: 'error',
+        action: 'demo',
+        error: /** @type {Error} */ (err),
+      };
+    }
   }
 
   /**
