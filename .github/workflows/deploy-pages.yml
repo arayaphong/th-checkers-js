@@ -2,11 +2,7 @@ name: Deploy static content to Pages
 
 on:
   push:
-<<<<<<< HEAD
-    branches: ["main", "development"]
-=======
     branches: ["development"]
->>>>>>> c3d3524 (Update deployment branch to development in GitHub Actions workflow)
   workflow_dispatch:
 
 permissions:
