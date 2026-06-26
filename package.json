@@ -1,0 +1,27 @@
+{
+  "name": "th-checkers",
+  "version": "1.0.0",
+  "description": "Thai Checkers game developed with pure HTML and JavaScript.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS='--experimental-vm-modules' jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arayaphong/th-checkers-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/arayaphong/th-checkers-js/issues"
+  },
+  "homepage": "https://github.com/arayaphong/th-checkers-js#readme",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}
