@@ -207,4 +207,6 @@ export function initShell(state, syncBoard) {
   syncBoard();
   syncPrompt();
   input.focus();
+
+  return { submitCommand };
 }

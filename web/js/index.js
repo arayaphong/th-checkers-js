@@ -5,5 +5,6 @@ import { initShell } from './shell.js';
 window.Engine = Engine;
 
 const state = { engine: new Engine() };
-const syncBoard = initBoard(state);
-initShell(state, syncBoard);
+let submitCommand = null;
+const syncBoard = initBoard(state, (command) => submitCommand?.(command));
+({ submitCommand } = initShell(state, syncBoard));
