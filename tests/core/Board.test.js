@@ -181,16 +181,20 @@ describe('Board - piece count invariant', () => {
 });
 
 describe('Board - piece map keys', () => {
-  test('getPieces returns stable position index keys', () => {
+  test('getPieces returns Position keys', () => {
     const board = Board.setup();
     const pieces = board.getPieces(PieceColor.WHITE);
     const position = Position.fromString('B7');
+    const entry = [...pieces].find(([pos]) => pos.equals(position));
 
-    expect(pieces.get(position.hash())).toEqual({
+    expect(entry).toBeDefined();
+    const [piecePosition, pieceInfo] = entry;
+    expect(piecePosition).toBeInstanceOf(Position);
+    expect(piecePosition.equals(position)).toBe(true);
+    expect(pieceInfo).toEqual({
       color: PieceColor.WHITE,
       type: PieceType.PION,
     });
-    expect(pieces.get(Position.fromString('B7').hash())).toEqual(pieces.get(position.hash()));
   });
 
   test('fromPieces accepts position index keys', () => {

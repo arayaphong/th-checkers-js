@@ -173,7 +173,7 @@ export class Board {
                 const mask = bit(pos.hash());
                 const isBlack = (this.#blackBits & mask) !== 0;
                 const isDame = (this.#dameBits & mask) !== 0;
-                return pieces.set(pos.hash(), {
+                return pieces.set(pos, {
                     color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
                     type: isDame ? PieceType.DAME : PieceType.PION,
                 });

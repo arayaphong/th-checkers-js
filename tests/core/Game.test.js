@@ -327,14 +327,12 @@ describe('Game - Undo functionality', () => {
         const blackPieces = afterUndoBoard.getPieces(PieceColor.BLACK);
 
         let promotionProperlyUndone = true;
-        for (const [index, pieceInfo] of whitePieces) {
-          const pos = Position.fromIndex(index);
+        for (const [pos, pieceInfo] of whitePieces) {
           if (pos.y !== 0 && pieceInfo.type === PieceType.DAME) {
             promotionProperlyUndone = false;
           }
         }
-        for (const [index, pieceInfo] of blackPieces) {
-          const pos = Position.fromIndex(index);
+        for (const [pos, pieceInfo] of blackPieces) {
           if (pos.y !== Position.BOARD_SIZE - 1 && pieceInfo.type === PieceType.DAME) {
             promotionProperlyUndone = false;
           }
@@ -739,8 +737,7 @@ describe('Game - Promotion mechanics', () => {
       const updatedBoard = game.board();
       const whitePieces = updatedBoard.getPieces(PieceColor.WHITE);
 
-      for (const [index, pieceInfo] of whitePieces) {
-        const pos = Position.fromIndex(index);
+      for (const [pos, pieceInfo] of whitePieces) {
         if (pos.y === 0) {
           expect(pieceInfo.type).toBe(PieceType.DAME);
         }
@@ -766,15 +763,13 @@ describe('Game - Promotion mechanics', () => {
       const whitePieces = updatedBoard.getPieces(PieceColor.WHITE);
       const blackPieces = updatedBoard.getPieces(PieceColor.BLACK);
 
-      for (const [index, pieceInfo] of whitePieces) {
-        const pos = Position.fromIndex(index);
+      for (const [pos, pieceInfo] of whitePieces) {
         if (pos.y !== 0) {
           expect(pieceInfo.type).toBe(PieceType.PION);
         }
       }
 
-      for (const [index, pieceInfo] of blackPieces) {
-        const pos = Position.fromIndex(index);
+      for (const [pos, pieceInfo] of blackPieces) {
         if (pos.y !== Position.BOARD_SIZE - 1) {
           expect(pieceInfo.type).toBe(PieceType.PION);
         }
@@ -801,8 +796,7 @@ describe('Game - Promotion mechanics', () => {
         const updatedBoard = game.board();
         const blackPieces = updatedBoard.getPieces(PieceColor.BLACK);
 
-        for (const [index, pieceInfo] of blackPieces) {
-          const pos = Position.fromIndex(index);
+        for (const [pos, pieceInfo] of blackPieces) {
           if (pos.y === Position.BOARD_SIZE - 1) {
             expect(pieceInfo.type).toBe(PieceType.DAME);
           }

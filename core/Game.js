@@ -1,6 +1,5 @@
 // Thai Checkers game state machine
 import { PieceColor } from './Piece.js';
-import { Position } from './Position.js';
 import { Board } from './Board.js';
 import { Explorer } from './Explorer.js';
 import { CaptureTrace } from './Legals.js';
@@ -122,7 +121,6 @@ export class Game {
 
         this.#moveableCache = board.getPieces(color)
             .keys()
-            .map((index) => Position.fromIndex(index))
             .map((pos) => [pos, explorer.findValidMoves(pos)])
             .filter(([, legals]) => !legals.empty())
             .reduce((moveable, [pos, legals]) => moveable.set(pos, legals), new Map());
