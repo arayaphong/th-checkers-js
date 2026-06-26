@@ -11,8 +11,8 @@ describe('parseInput - commands', () => {
     expect(parseInput('moves')).toEqual({ kind: 'command', name: 'moves' });
     expect(parseInput('demo1')).toEqual({ kind: 'command', name: 'demo1' });
     expect(parseInput('demo2')).toEqual({ kind: 'command', name: 'demo2' });
-    expect(parseInput('demo31')).toEqual({ kind: 'command', name: 'demo31' });
-    expect(parseInput('demo32')).toEqual({ kind: 'command', name: 'demo32' });
+    expect(parseInput('demo3')).toEqual({ kind: 'command', name: 'demo3' });
+    expect(parseInput('demo4')).toEqual({ kind: 'command', name: 'demo4' });
     expect(parseInput('help')).toEqual({ kind: 'command', name: 'help' });
     expect(parseInput('quit')).toEqual({ kind: 'command', name: 'quit' });
     expect(parseInput('exit')).toEqual({ kind: 'command', name: 'quit' });

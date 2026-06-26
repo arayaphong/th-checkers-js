@@ -5,7 +5,7 @@
 import { Position } from '../core/Position.js';
 
 /**
- * @typedef {'undo'|'redo'|'new'|'help'|'moves'|'demo1'|'demo2'|'demo31'|'demo32'|'quit'} CommandName
+ * @typedef {'undo'|'redo'|'new'|'help'|'moves'|'demo1'|'demo2'|'demo3'|'demo4'|'quit'} CommandName
  */
 
 /**
@@ -71,8 +71,8 @@ const COMMAND_ALIASES = {
   m: 'moves',
   demo1: 'demo1',
   demo2: 'demo2',
-  demo31: 'demo31',
-  demo32: 'demo32',
+  demo3: 'demo3',
+  demo4: 'demo4',
   quit: 'quit',
   exit: 'quit',
   q: 'quit',

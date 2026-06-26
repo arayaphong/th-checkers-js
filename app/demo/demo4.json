@@ -1,0 +1,15 @@
+{
+  "id": "demo4",
+  "title": "Demo 4: dame loop capture with extra central branching.",
+  "description": "Demo 4: dame loop capture with extra central branching.\n\nSame ring as Demo 3, but with an extra black pion on E4 in the centre.\nThe central piece creates genuine branches: some sequences capture only the\nouter ring and end on D1, while others weave through E4 and end elsewhere.\n\n  Outer ring loop (ends D1):\n    D1 -> C2 -> B3 -> C4 -> D5 -> E6 -> F7 -> G6 -> H5 -> G4 -> F3 -> E2 -> D1\n\nIn the REPL, try:\n  > d1 d1\nThe app will ask you to choose because the available D1 -> D1 moves capture\ndifferent pieces.\n",
+  "pieces": [
+    ["D1", { "color": "WHITE", "type": "DAME" }],
+    ["C2", { "color": "BLACK", "type": "PION" }],
+    ["C4", { "color": "BLACK", "type": "PION" }],
+    ["E4", { "color": "BLACK", "type": "PION" }],
+    ["E6", { "color": "BLACK", "type": "PION" }],
+    ["G6", { "color": "BLACK", "type": "PION" }],
+    ["G4", { "color": "BLACK", "type": "PION" }],
+    ["E2", { "color": "BLACK", "type": "PION" }]
+  ]
+}

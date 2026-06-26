@@ -1,0 +1,12 @@
+{
+  "id": "demo2",
+  "title": "Demo 2: dame loop capture ending on the original square.",
+  "description": "Demo 2: dame loop capture ending on the original square.\n\nThe white dame on D5 can capture four black pieces in a loop:\n  D5 -> C4 -> B3 -> C2 -> D1 -> E2 -> F3 -> E4 -> D5\n\nIt captures C4, C2, E2, and E4, then lands back on D5.\nIn the REPL, try:\n  > d5 d5\n",
+  "pieces": [
+    ["D5", { "color": "WHITE", "type": "DAME" }],
+    ["C4", { "color": "BLACK", "type": "PION" }],
+    ["E4", { "color": "BLACK", "type": "PION" }],
+    ["C2", { "color": "BLACK", "type": "PION" }],
+    ["E2", { "color": "BLACK", "type": "PION" }]
+  ]
+}

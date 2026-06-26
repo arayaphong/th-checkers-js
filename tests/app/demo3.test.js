@@ -1,17 +1,17 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { createDemo31Game, explainDemo31 } from '../../app/demo31.js';
+import { createDemo3Game, explainDemo3 } from '../../app/demo/index.js';
 
-describe('createDemo31Game', () => {
+describe('createDemo3Game', () => {
   test('produces exactly two legal moves', () => {
-    const game = createDemo31Game();
+    const game = createDemo3Game();
     const moves = game.getMoves();
 
     expect(moves).toHaveLength(2);
   });
 
   test('both moves start and end on D1 and capture the same six pieces', () => {
-    const game = createDemo31Game();
+    const game = createDemo3Game();
     const moves = game.getMoves();
 
     const capturedSet = ['C2', 'C4', 'E2', 'E6', 'G4', 'G6'];
@@ -24,7 +24,7 @@ describe('createDemo31Game', () => {
   });
 
   test('the two moves are mirror-image paths', () => {
-    const game = createDemo31Game();
+    const game = createDemo3Game();
     const moves = game.getMoves();
     const [pathA, pathB] = moves.map((m) => m.path.map((p) => p.toString()));
 
@@ -38,9 +38,9 @@ describe('createDemo31Game', () => {
   });
 });
 
-describe('explainDemo31', () => {
+describe('explainDemo3', () => {
   test('mentions the key squares and both loop directions', () => {
-    const text = explainDemo31();
+    const text = explainDemo3();
     expect(text).toContain('D1');
     expect(text).toContain('C2');
     expect(text).toContain('E2');

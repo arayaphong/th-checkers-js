@@ -11,10 +11,12 @@ import { createInterface } from 'node:readline';
 import { stdin, stdout } from 'node:process';
 
 import { Game } from '../core/Game.js';
-import { createDemo1Game, explainDemo1 } from './demo1.js';
-import { createDemo2Game, explainDemo2 } from './demo2.js';
-import { createDemo31Game, explainDemo31 } from './demo31.js';
-import { createDemo32Game, explainDemo32 } from './demo32.js';
+import {
+  createDemo1Game, explainDemo1,
+  createDemo2Game, explainDemo2,
+  createDemo3Game, explainDemo3,
+  createDemo4Game, explainDemo4,
+} from './demo/index.js';
 import { parseInput } from './parse.js';
 import { formatMove, formatTrace, renderGame } from './render.js';
 
@@ -33,8 +35,8 @@ const HELP = `Commands:
 Demos (load a preset position):
   demo1             branching chain capture, same final landing
   demo2             dame loop capture ending on the original square
-  demo31            dame loop capture with two mirror-image paths
-  demo32            dame loop capture with extra central branching`;
+  demo3             dame loop capture with two mirror-image paths
+  demo4             dame loop capture with extra central branching`;
 
 export class Repl {
   #game;
@@ -143,16 +145,16 @@ export class Repl {
         this.#print(explainDemo2());
         this.#print(renderGame(this.#game));
         break;
-      case 'demo31':
-        this.#game = createDemo31Game();
+      case 'demo3':
+        this.#game = createDemo3Game();
         this.#redoStack = [];
-        this.#print(explainDemo31());
+        this.#print(explainDemo3());
         this.#print(renderGame(this.#game));
         break;
-      case 'demo32':
-        this.#game = createDemo32Game();
+      case 'demo4':
+        this.#game = createDemo4Game();
         this.#redoStack = [];
-        this.#print(explainDemo32());
+        this.#print(explainDemo4());
         this.#print(renderGame(this.#game));
         break;
       case 'quit':

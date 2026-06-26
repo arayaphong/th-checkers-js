@@ -1,17 +1,17 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { createDemo32Game, explainDemo32 } from '../../app/demo32.js';
+import { createDemo4Game, explainDemo4 } from '../../app/demo/index.js';
 
-describe('createDemo32Game', () => {
+describe('createDemo4Game', () => {
   test('has multiple branching capture sequences', () => {
-    const game = createDemo32Game();
+    const game = createDemo4Game();
     const moves = game.getMoves();
 
     expect(moves.length).toBeGreaterThan(2);
   });
 
   test('contains the two simple opposite-direction ring-loop paths', () => {
-    const game = createDemo32Game();
+    const game = createDemo4Game();
     const moves = game.getMoves();
 
     const loopPaths = moves
@@ -27,7 +27,7 @@ describe('createDemo32Game', () => {
   });
 
   test('the two ring-loop paths each capture six pieces and leave E4 untouched', () => {
-    const game = createDemo32Game();
+    const game = createDemo4Game();
     const moves = game.getMoves();
 
     const ringLoopPaths = [
@@ -47,7 +47,7 @@ describe('createDemo32Game', () => {
   });
 
   test('some sequences capture all seven black pions', () => {
-    const game = createDemo32Game();
+    const game = createDemo4Game();
     const moves = game.getMoves();
 
     const fullCaptures = moves.filter((m) => m.captured.length === 7);
@@ -60,9 +60,9 @@ describe('createDemo32Game', () => {
   });
 });
 
-describe('explainDemo32', () => {
+describe('explainDemo4', () => {
   test('mentions the key squares and both loop directions', () => {
-    const text = explainDemo32();
+    const text = explainDemo4();
     expect(text).toContain('D1');
     expect(text).toContain('C2');
     expect(text).toContain('E2');

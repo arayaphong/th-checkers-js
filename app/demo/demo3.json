@@ -1,0 +1,14 @@
+{
+  "id": "demo3",
+  "title": "Demo 3: dame loop capture with two mirror-image paths.",
+  "description": "Demo 3: dame loop capture with two mirror-image paths.\n\nThe white dame on D1 is surrounded by six black pions.\nBoth loop directions capture the exact same six pieces and land back on D1;\nonly the path differs.\n\n  Path A (via C2 first):\n    D1 -> C2 -> B3 -> C4 -> D5 -> E6 -> F7 -> G6 -> H5 -> G4 -> F3 -> E2 -> D1\n\n  Path B (via E2 first):\n    D1 -> E2 -> F3 -> G4 -> H5 -> G6 -> F7 -> E6 -> D5 -> C4 -> B3 -> C2 -> D1\n\nIn the REPL, try:\n  > d1 d1\nThe move is applied directly because both paths produce the same result.\nYou can also pick explicitly with 1 or 2.\n",
+  "pieces": [
+    ["D1", { "color": "WHITE", "type": "DAME" }],
+    ["C2", { "color": "BLACK", "type": "PION" }],
+    ["C4", { "color": "BLACK", "type": "PION" }],
+    ["E6", { "color": "BLACK", "type": "PION" }],
+    ["G6", { "color": "BLACK", "type": "PION" }],
+    ["G4", { "color": "BLACK", "type": "PION" }],
+    ["E2", { "color": "BLACK", "type": "PION" }]
+  ]
+}
