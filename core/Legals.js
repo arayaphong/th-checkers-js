@@ -58,18 +58,10 @@ export class CaptureTrace {
         return this.#sequence.length / 2;
     }
     get captured() {
-        const result = [];
-        for (let i = 0; i < this.#sequence.length; i += 2) {
-            result.push(this.#sequence[i]);
-        }
-        return result;
+        return this.#sequence.filter((_, i) => i % 2 === 0);
     }
     path(from) {
-        const result = [from];
-        for (let i = 1; i < this.#sequence.length; i += 2) {
-            result.push(this.#sequence[i]);
-        }
-        return result;
+        return [from, ...this.#sequence.filter((_, i) => i % 2 === 1)];
     }
     get finalLanding() {
         return this.#sequence.at(-1);
@@ -147,6 +139,6 @@ export class Legals {
         return new CaptureTrace([...this.#moves[index].sequence]);
     }
     [Symbol.iterator]() {
-        return this.#moves.map(copyMoveInfo)[Symbol.iterator]();
+        return this.#moves.values().map(copyMoveInfo);
     }
 }

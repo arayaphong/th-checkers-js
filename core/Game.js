@@ -13,32 +13,21 @@ function copyMove(move) {
     };
 }
 export function boardToString(board) {
-    let result = '   ';
-    for (let col = 0; col < 8; col++) {
-        result += String.fromCharCode('A'.charCodeAt(0) + col) + ' ';
-    }
-    result += '\n';
-    for (let row = 0; row < 8; row++) {
-        result += ` ${row + 1} `;
-        for (let col = 0; col < 8; col++) {
-            let symbol = ' ';
+    const cols = Array.from({ length: 8 }, (_, col) => String.fromCharCode('A'.charCodeAt(0) + col));
+    const header = `   ${cols.join(' ')} `;
+    const rows = Array.from({ length: 8 }, (_, row) => {
+        const cells = Array.from({ length: 8 }, (_, col) => {
             if ((row + col) % 2 === 0) {
-                symbol = '.';
+                return '.';
             }
-            else {
-                const pos = Position.fromCoords(col, row);
-                if (board.isOccupied(pos)) {
-                    symbol = pieceSymbol(board.isBlackPiece(pos), board.isDamePiece(pos));
-                }
-                else {
-                    symbol = ' ';
-                }
-            }
-            result += symbol + ' ';
-        }
-        result += '\n';
-    }
-    return result;
+            const pos = Position.fromCoords(col, row);
+            return board.isOccupied(pos)
+                ? pieceSymbol(board.isBlackPiece(pos), board.isDamePiece(pos))
+                : ' ';
+        });
+        return ` ${row + 1} ${cells.join(' ')} `;
+    });
+    return `${[header, ...rows].join('\n')}\n`;
 }
 export class Game {
     #boardHistory = [];
@@ -160,11 +149,7 @@ export class Game {
         this.#sortedPositionsCache.sort((a, b) => a.compare(b));
     }
     #hasMandatoryCapture() {
-        for (const legals of this.#moveableCache.values()) {
-            if (legals.hasCaptured())
-                return true;
-        }
-        return false;
+        return this.#moveableCache.values().some(legals => legals.hasCaptured());
     }
     #toMove(from, info) {
         const move = { from, to: info.targetPosition, captured: [...info.capturedPositions] };
@@ -175,13 +160,9 @@ export class Game {
     }
     #computeMoveCountFast() {
         const hasCaptures = this.#hasMandatoryCapture();
-        let count = 0;
-        for (const legals of this.#moveableCache.values()) {
-            if (hasCaptures && !legals.hasCaptured())
-                continue;
-            count += legals.size();
-        }
-        return count;
+        return this.#moveableCache.values()
+            .filter(legals => !hasCaptures || legals.hasCaptured())
+            .reduce((count, legals) => count + legals.size(), 0);
     }
     #buildAllMoves() {
         const moves = [];

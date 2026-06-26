@@ -42,9 +42,7 @@ export class Explorer {
         const seen = new Set();
         const deduped = [];
         for (const seq of results) {
-            const captures = [];
-            for (let i = 0; i < seq.length; i += 2)
-                captures.push(seq[i]);
+            const captures = seq.filter((_, i) => i % 2 === 0);
             const landing = seq.at(-1);
             const key = captures.map(c => c.hash()).sort((a, b) => a - b).join(',') + '|' + landing.hash();
             if (!seen.has(key)) {

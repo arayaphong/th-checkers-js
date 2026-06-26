@@ -2,7 +2,7 @@
 // Index 0..31 maps to coordinates where (x+y) is odd.
 const BOARD_SIZE = 8;
 const MAX_POSITIONS = (BOARD_SIZE * BOARD_SIZE) / 2; // 32
-const POSITION_PATTERN = /^([A-H])([1-8])$/;
+const POSITION_PATTERN = /^(?<col>[A-H])(?<row>[1-8])$/;
 export class Position {
     static BOARD_SIZE = BOARD_SIZE;
     static MAX_POSITIONS = MAX_POSITIONS;
@@ -31,8 +31,9 @@ export class Position {
         const match = POSITION_PATTERN.exec(s);
         if (!match)
             throw new Error(`Invalid position string: "${s}"`);
-        const x = match[1].charCodeAt(0) - 'A'.charCodeAt(0);
-        const y = Number(match[2]) - 1;
+        const { col, row } = match.groups;
+        const x = col.charCodeAt(0) - 'A'.charCodeAt(0);
+        const y = Number(row) - 1;
         return Position.fromCoords(x, y);
     }
     /** True if (x,y) is a valid black square on the board. */
