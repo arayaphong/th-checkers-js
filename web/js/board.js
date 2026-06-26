@@ -3,24 +3,35 @@ import { Position } from '../../core/Position.js';
 export function initBoard(state, onMove) {
   const boardElement = document.querySelector('.board');
   let selected = null;
+  let selectedCell = null;
 
-  function handleCellClick(pos) {
+  function clearSelection() {
+    selectedCell?.classList.remove('selected');
+    selected = null;
+    selectedCell = null;
+  }
+
+  function handleCellClick(pos, cell) {
     if (!selected) {
       selected = pos;
+      selectedCell = cell;
+      cell.classList.add('selected');
       return;
     }
 
     if (selected.equals(pos)) {
-      selected = null;
+      clearSelection();
       return;
     }
 
-    onMove(`${selected.toString()} ${pos.toString()}`);
-    selected = null;
+    const from = selected;
+    clearSelection();
+    onMove(`${from.toString()} ${pos.toString()}`);
   }
 
   function syncBoard() {
     selected = null;
+    selectedCell = null;
     const board = state.engine.getGame().board();
     boardElement.replaceChildren();
 
@@ -39,7 +50,7 @@ export function initBoard(state, onMove) {
               cell.classList.add('king');
             }
           }
-          cell.addEventListener('click', () => handleCellClick(pos));
+          cell.addEventListener('click', () => handleCellClick(pos, cell));
         }
 
         boardElement.append(cell);
