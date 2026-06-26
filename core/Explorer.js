@@ -44,17 +44,11 @@ export class Explorer {
     // ─── capture sequence finding ───
     #findAllCaptureSequences(from, color, isDame) {
         const results = this.#findCapturesFrom(this.#board, from, color, isDame, []);
-        // Deduplicate: same captured set + same landing = same sequence
+        // Deduplicate: same full path = same sequence
         const seen = new Set();
         const deduped = [];
         for (const seq of results) {
-            const captures = seq.filter((_, i) => i % 2 === 0);
-            const landing = seq.at(-1);
-            const capturedKey = captures
-                .map((captured) => captured.hash())
-                .toSorted((a, b) => a - b)
-                .join(',');
-            const key = `${capturedKey}|${landing.hash()}`;
+            const key = seq.map((pos) => pos.hash()).join(',');
             if (!seen.has(key)) {
                 seen.add(key);
                 deduped.push(seq);

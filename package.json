@@ -7,7 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS='--experimental-vm-modules' jest"
+    "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS='--experimental-vm-modules' jest",
+    "demo": "node app/demo.js"
   },
   "repository": {
     "type": "git",
