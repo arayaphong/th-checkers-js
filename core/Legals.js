@@ -1,5 +1,8 @@
 // Legal moves container — digests regular positions or capture sequences into uniform MoveInfo
 import { Position } from './Position.js';
+
+const LEGALS_CONSTRUCTOR_TOKEN = Symbol('Legals.constructor');
+
 function assertValidIndex(method, index, length) {
     if (!Number.isInteger(index)) {
         throw new RangeError(`${method}: index must be an integer`);
@@ -44,6 +47,17 @@ function processCaptureSequence(seq) {
         sequence: seq,
     };
 }
+
+function processRegularMove(position, index) {
+    assertPosition(position, `Regular move ${index}`);
+    return {
+        targetPosition: position,
+        capturedPositions: [],
+        path: [position],
+        sequence: undefined,
+    };
+}
+
 export class CaptureTrace {
     #sequence;
     constructor(sequence) {
@@ -80,35 +94,28 @@ export class CaptureTrace {
 export class Legals {
     #moves;
     #hasCaptures;
-    // Implementation
-    constructor(items) {
-        if (items.length === 0) {
-            this.#moves = [];
-            this.#hasCaptures = false;
-            return;
+    constructor(token, moves, hasCaptures) {
+        if (token !== LEGALS_CONSTRUCTOR_TOKEN) {
+            throw new TypeError('Use Legals.fromRegularMoves() or Legals.fromCaptures()');
         }
-        // Type detection: first item is Position or array
-        if (Array.isArray(items.at(0))) {
-            this.#hasCaptures = true;
-            this.#moves = items.map((item, index) => {
-                if (!Array.isArray(item)) {
-                    throw new TypeError(`Capture move ${index} must be a capture sequence`);
-                }
-                return processCaptureSequence(item);
-            });
-        }
-        else {
-            this.#hasCaptures = false;
-            this.#moves = items.map((item, index) => {
-                assertPosition(item, `Regular move ${index}`);
-                return {
-                    targetPosition: item,
-                    capturedPositions: [],
-                    path: [item],
-                    sequence: undefined,
-                };
-            });
-        }
+        this.#moves = moves;
+        this.#hasCaptures = hasCaptures;
+    }
+    static fromRegularMoves(positions) {
+        return new Legals(
+            LEGALS_CONSTRUCTOR_TOKEN,
+            positions.map(processRegularMove),
+            false,
+        );
+    }
+    static fromCaptures(captureSequences) {
+        const moves = captureSequences.map((sequence, index) => {
+            if (!Array.isArray(sequence)) {
+                throw new TypeError(`Capture move ${index} must be a capture sequence`);
+            }
+            return processCaptureSequence(sequence);
+        });
+        return new Legals(LEGALS_CONSTRUCTOR_TOKEN, moves, moves.length > 0);
     }
     hasCaptured() {
         return this.#hasCaptures;

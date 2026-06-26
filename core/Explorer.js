@@ -34,12 +34,12 @@ export class Explorer {
         // 1. Try captures
         const captures = this.#findAllCaptureSequences(from, color, isDame);
         if (captures.length > 0)
-            return new Legals(captures);
+            return Legals.fromCaptures(captures);
 
         // 2. Regular moves
         const dirs = getDirs(color, isDame);
         const positions = this.#findRegularMoves(from, color, isDame, dirs);
-        return new Legals(positions);
+        return Legals.fromRegularMoves(positions);
     }
     // ─── capture sequence finding ───
     #findAllCaptureSequences(from, color, isDame) {

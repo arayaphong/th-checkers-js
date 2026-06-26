@@ -4,7 +4,7 @@ import { Position } from '../../core/Position.js';
 
 describe('Legals - index validation', () => {
   test('getPosition rejects non-integer indexes', () => {
-    const legals = new Legals([Position.fromString('B1')]);
+    const legals = Legals.fromRegularMoves([Position.fromString('B1')]);
 
     expect(() => legals.getPosition(0.5)).toThrow(RangeError);
     expect(() => legals.getPosition(0.5)).toThrow(/integer/);
@@ -12,19 +12,19 @@ describe('Legals - index validation', () => {
   });
 
   test('getPosition rejects out-of-range indexes', () => {
-    const legals = new Legals([Position.fromString('B1')]);
+    const legals = Legals.fromRegularMoves([Position.fromString('B1')]);
 
     expect(() => legals.getPosition(-1)).toThrow(RangeError);
     expect(() => legals.getPosition(1)).toThrow(RangeError);
   });
 
   test('regular move path is the target square', () => {
-    const legals = new Legals([Position.fromString('B1')]);
+    const legals = Legals.fromRegularMoves([Position.fromString('B1')]);
     expect(legals.getMoveInfo(0).path.map(pos => pos.toString())).toEqual(['B1']);
   });
 
   test('getMoveInfo rejects invalid indexes', () => {
-    const legals = new Legals([Position.fromString('B1')]);
+    const legals = Legals.fromRegularMoves([Position.fromString('B1')]);
 
     expect(() => legals.getMoveInfo(0.5)).toThrow(RangeError);
     expect(() => legals.getMoveInfo(Number.NaN)).toThrow(RangeError);
@@ -32,7 +32,7 @@ describe('Legals - index validation', () => {
   });
 
   test('getCapturePieces rejects invalid indexes for capture moves', () => {
-    const legals = new Legals([
+    const legals = Legals.fromCaptures([
       [Position.fromString('B3'), Position.fromString('A2')],
     ]);
 
@@ -44,7 +44,7 @@ describe('Legals - index validation', () => {
 
 describe('Legals - immutability', () => {
   test('getCapturePieces returns a defensive copy', () => {
-    const legals = new Legals([
+    const legals = Legals.fromCaptures([
       [Position.fromString('B3'), Position.fromString('A2')],
     ]);
 
@@ -56,7 +56,7 @@ describe('Legals - immutability', () => {
   });
 
   test('getMoveInfo returns a defensive copy', () => {
-    const legals = new Legals([
+    const legals = Legals.fromCaptures([
       [Position.fromString('B3'), Position.fromString('A2')],
     ]);
 
@@ -67,7 +67,7 @@ describe('Legals - immutability', () => {
   });
 
   test('iterator yields defensive copies', () => {
-    const legals = new Legals([
+    const legals = Legals.fromCaptures([
       [Position.fromString('B3'), Position.fromString('A2')],
     ]);
     const [move] = [...legals];
@@ -80,23 +80,23 @@ describe('Legals - immutability', () => {
 
 describe('Legals - capture sequence validation', () => {
   test('rejects empty capture sequence', () => {
-    expect(() => new Legals([[]])).toThrow(/captured\/landing position pairs/);
+    expect(() => Legals.fromCaptures([[]])).toThrow(/captured\/landing position pairs/);
   });
 
   test('rejects single-position capture sequence', () => {
-    expect(() => new Legals([
+    expect(() => Legals.fromCaptures([
       [Position.fromString('B3')],
     ])).toThrow(/captured\/landing position pairs/);
   });
 
   test('rejects odd-length capture sequence', () => {
-    expect(() => new Legals([
+    expect(() => Legals.fromCaptures([
       [Position.fromString('B3'), Position.fromString('A2'), Position.fromString('D3')],
     ])).toThrow(/captured\/landing position pairs/);
   });
 
   test('accepts captured and landing pairs', () => {
-    const legals = new Legals([
+    const legals = Legals.fromCaptures([
       [
         Position.fromString('B3'),
         Position.fromString('A2'),
@@ -112,11 +112,16 @@ describe('Legals - capture sequence validation', () => {
 });
 
 describe('Legals - runtime position validation', () => {
+  test('constructor rejects direct ambiguous construction', () => {
+    expect(() => new Legals([Position.fromString('B1')])).toThrow(TypeError);
+    expect(() => new Legals([Position.fromString('B1')])).toThrow(/fromRegularMoves/);
+  });
+
   test('rejects non-Position regular moves', () => {
     const positions = [{}];
 
-    expect(() => new Legals(positions)).toThrow(TypeError);
-    expect(() => new Legals(positions)).toThrow(/Regular move 0 must be a Position/);
+    expect(() => Legals.fromRegularMoves(positions)).toThrow(TypeError);
+    expect(() => Legals.fromRegularMoves(positions)).toThrow(/Regular move 0 must be a Position/);
   });
 
   test('rejects mixed regular move inputs', () => {
@@ -125,8 +130,8 @@ describe('Legals - runtime position validation', () => {
       [Position.fromString('B3'), Position.fromString('A2')],
     ];
 
-    expect(() => new Legals(positions)).toThrow(TypeError);
-    expect(() => new Legals(positions)).toThrow(/Regular move 1 must be a Position/);
+    expect(() => Legals.fromRegularMoves(positions)).toThrow(TypeError);
+    expect(() => Legals.fromRegularMoves(positions)).toThrow(/Regular move 1 must be a Position/);
   });
 
   test('rejects non-Position captured entries', () => {
@@ -134,8 +139,8 @@ describe('Legals - runtime position validation', () => {
       [{}, Position.fromString('A2')],
     ];
 
-    expect(() => new Legals(sequences)).toThrow(TypeError);
-    expect(() => new Legals(sequences)).toThrow(/Capture sequence item 0 must be a Position/);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(TypeError);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(/Capture sequence item 0 must be a Position/);
   });
 
   test('rejects non-Position landing entries', () => {
@@ -143,8 +148,8 @@ describe('Legals - runtime position validation', () => {
       [Position.fromString('B3'), {}],
     ];
 
-    expect(() => new Legals(sequences)).toThrow(TypeError);
-    expect(() => new Legals(sequences)).toThrow(/Capture sequence item 1 must be a Position/);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(TypeError);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(/Capture sequence item 1 must be a Position/);
   });
 
   test('rejects mixed capture move inputs', () => {
@@ -153,8 +158,8 @@ describe('Legals - runtime position validation', () => {
       Position.fromString('C4'),
     ];
 
-    expect(() => new Legals(sequences)).toThrow(TypeError);
-    expect(() => new Legals(sequences)).toThrow(/Capture move 1 must be a capture sequence/);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(TypeError);
+    expect(() => Legals.fromCaptures(sequences)).toThrow(/Capture move 1 must be a capture sequence/);
   });
 });
 
