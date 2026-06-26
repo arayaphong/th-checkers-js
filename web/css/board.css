@@ -90,6 +90,12 @@
   z-index: 4;
 }
 
+/* A traced/previewed path: one colour tints every square along the route,
+   layered over the base cell colour and beneath pieces, hints and the crown. */
+.cell.path {
+  background-image: linear-gradient(rgba(45, 212, 191, 0.42), rgba(45, 212, 191, 0.42));
+}
+
 .cell.hint::after {
   content: '';
   position: absolute;

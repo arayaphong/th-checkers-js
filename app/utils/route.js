@@ -25,3 +25,20 @@ export function expandRoute(waypoints) {
   }
   return cells;
 }
+
+/**
+ * The continuous trail from `from` to `to`, but only when it is unambiguous:
+ * exactly one legal move connects the two squares. Returns `null` when there is
+ * no such move or when several distinct paths share the same endpoints (e.g. a
+ * dame loop with mirror-image routes) — those are intentionally not highlighted.
+ * @param {import('../../core/Game.js').Move[]} moves
+ * @param {string} from algebraic notation, e.g. "D1"
+ * @param {string} to algebraic notation, e.g. "B3"
+ * @returns {import('../../core/Position.js').Position[] | null}
+ */
+export function singleRoute(moves, from, to) {
+  const matches = moves.filter(
+    (move) => move.from.toString() === from && move.to.toString() === to,
+  );
+  return matches.length === 1 ? expandRoute(matches[0].path) : null;
+}

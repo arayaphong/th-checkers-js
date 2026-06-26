@@ -15,8 +15,9 @@ const shellApi = {
   submit: (command) => shell?.submitCommand(command),
   movableSquares: () => shell?.movableSquares() ?? new Set(),
   targetsFrom: (notation) => shell?.targetsFrom(notation) ?? [],
+  pathFor: (from, to) => shell?.pathFor(from, to) ?? null,
 };
 
-const syncBoard = initBoard(state, shellApi);
-shell = initShell(state, syncBoard);
-syncBoard(); // re-render now that the shell's legality queries are live
+const board = initBoard(state, shellApi);
+shell = initShell(state, board);
+board.sync(); // re-render now that the shell's legality queries are live

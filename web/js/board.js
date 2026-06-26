@@ -12,6 +12,41 @@ export function initBoard(state, shell) {
   let movable = new Set();
   let selected = null;
   let selectedCell = null;
+  // Squares highlighted by a `trace` command; kept so a transient hover preview
+  // can restore them when the pointer leaves.
+  let stickyPath = [];
+
+  function paintPath(notations) {
+    for (const cell of cellByNotation.values()) {
+      cell.classList.remove('path');
+    }
+    for (const notation of notations) {
+      cellByNotation.get(notation)?.classList.add('path');
+    }
+  }
+
+  // Preview the continuous path from the selected source to the hovered/focused
+  // target, but only when the shell reports a single unambiguous route.
+  function previewPathTo(notation) {
+    if (!selected) return;
+    const cells = shell.pathFor(selected.toString(), notation);
+    paintPath(cells ?? stickyPath);
+  }
+
+  function endPreview() {
+    paintPath(stickyPath);
+  }
+
+  // Pin a path on the board (driven by a `trace` command in the shell).
+  function highlightPath(notations) {
+    stickyPath = notations ?? [];
+    paintPath(stickyPath);
+  }
+
+  function clearPath() {
+    stickyPath = [];
+    paintPath([]);
+  }
 
   function describeCell(board, pos, notation) {
     if (!board.isOccupied(pos)) {
@@ -33,6 +68,8 @@ export function initBoard(state, shell) {
   }
 
   function select(pos, cell) {
+    // Starting a new move intent retires any pinned trace highlight.
+    clearPath();
     selected = pos;
     selectedCell = cell;
     cell.classList.add('selected');
@@ -103,6 +140,7 @@ export function initBoard(state, shell) {
   function syncBoard() {
     selected = null;
     selectedCell = null;
+    stickyPath = [];
     cellByNotation.clear();
     movable = shell.movableSquares();
     trace('board', 'render', { movable: [...movable] });
@@ -141,6 +179,12 @@ export function initBoard(state, shell) {
           }
           cell.addEventListener('click', () => handleCellClick(pos, cell));
           cell.addEventListener('keydown', (event) => handleCellKeydown(event, pos, cell));
+          // Hover or keyboard-focus a target to preview the path; leaving restores
+          // whatever a `trace` command had pinned.
+          cell.addEventListener('mouseenter', () => previewPathTo(notation));
+          cell.addEventListener('mouseleave', endPreview);
+          cell.addEventListener('focus', () => previewPathTo(notation));
+          cell.addEventListener('blur', endPreview);
         } else {
           cell.setAttribute('aria-hidden', 'true');
         }
@@ -153,5 +197,5 @@ export function initBoard(state, shell) {
   }
 
   syncBoard();
-  return syncBoard;
+  return { sync: syncBoard, highlightPath, clearPath };
 }

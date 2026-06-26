@@ -1,7 +1,9 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { expandRoute } from '../../../app/utils/route.js';
+import { expandRoute, singleRoute } from '../../../app/utils/route.js';
+import { Game } from '../../../core/Game.js';
 import { Position } from '../../../core/Position.js';
+import { createDemo3Game } from '../../../app/demo/index.js';
 
 /** Build waypoints from algebraic notation, e.g. p('D1', 'B3'). */
 function p(...notations) {
@@ -59,5 +61,36 @@ describe('expandRoute', () => {
     const before = waypoints.map((pos) => pos.toString());
     expandRoute(waypoints);
     expect(waypoints.map((pos) => pos.toString())).toEqual(before);
+  });
+});
+
+describe('singleRoute', () => {
+  test('returns the continuous path when exactly one move connects the squares', () => {
+    const game = new Game();
+    const move = game.getMoves()[0];
+    const from = move.from.toString();
+    const to = move.to.toString();
+
+    const route = singleRoute(game.getMoves(), from, to);
+    expect(route).not.toBeNull();
+    expect(route.map((pos) => pos.toString())).toEqual(
+      expandRoute(move.path).map((pos) => pos.toString()),
+    );
+  });
+
+  test('returns null when no legal move connects the squares', () => {
+    const game = new Game();
+    expect(singleRoute(game.getMoves(), 'A1', 'H8')).toBeNull();
+  });
+
+  test('returns null when several mirror-image paths share the endpoints', async () => {
+    // demo3 is a dame loop with two distinct D1 -> D1 routes — ambiguous, so it
+    // is intentionally not highlighted.
+    const game = await createDemo3Game();
+    const loops = game.getMoves().filter(
+      (move) => move.from.toString() === 'D1' && move.to.toString() === 'D1',
+    );
+    expect(loops.length).toBeGreaterThan(1);
+    expect(singleRoute(game.getMoves(), 'D1', 'D1')).toBeNull();
   });
 });

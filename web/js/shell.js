@@ -1,5 +1,6 @@
 import { parseInput } from '../../app/parse.js';
 import { formatMove, formatTrace, renderGame } from '../../app/render.js';
+import { singleRoute } from '../../app/utils/route.js';
 import { trace } from './debug.js';
 
 const HELP = `Commands:
@@ -20,7 +21,7 @@ Demos:
 	demo3             dame loop capture with two mirror-image paths
 	demo4             dame loop capture with extra central branching`;
 
-export function initShell(state, syncBoard) {
+export function initShell(state, board) {
   const output = document.querySelector('#output');
   const statusLine = document.querySelector('#status-line');
   const form = document.querySelector('#command-form');
@@ -64,6 +65,15 @@ export function initShell(state, syncBoard) {
     return targets;
   }
 
+  // The continuous path the board highlights, or null when from -> to is not a
+  // single unambiguous route (no such move, or several mirror-image paths).
+  function pathFor(from, to) {
+    const route = singleRoute(engine().getGame().getMoves(), from, to);
+    const cells = route ? route.map((pos) => pos.toString()) : null;
+    trace('shell', 'pathFor', `${from} -> ${to}`, cells);
+    return cells;
+  }
+
   function appendBlock(text = '') {
     output.textContent += `${text}\n`;
     output.scrollTop = output.scrollHeight;
@@ -95,13 +105,13 @@ export function initShell(state, syncBoard) {
     switch (result.kind) {
       case 'state':
         if (result.action !== 'moves') activeDemo = null;
-        syncBoard();
+        board.sync();
         appendBlock(renderGame(engine().getGame()));
         setStatus(`Action: ${result.action}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'demo':
         activeDemo = result.id;
-        syncBoard();
+        board.sync();
         appendBlock(result.description);
         appendBlock(renderGame(engine().getGame()));
         setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
@@ -127,6 +137,7 @@ export function initShell(state, syncBoard) {
         break;
       case 'trace':
         appendBlock(formatTrace(moveAt(result.move.index)));
+        board.highlightPath(result.move.path.map((cell) => cell.notation));
         setStatus(`Trace for move #${result.move.number}.`);
         break;
       case 'trace-list':
@@ -134,6 +145,10 @@ export function initShell(state, syncBoard) {
         for (const [index, move] of result.moves.entries()) {
           appendBlock(`  ${index + 1}) ${formatTrace(moveAt(move.index))}`);
         }
+        // Only a single unambiguous route is highlighted; mirror-image paths are not.
+        board.highlightPath(
+          result.moves.length === 1 ? result.moves[0].path.map((cell) => cell.notation) : [],
+        );
         setStatus(`Found ${result.moves.length} trace(s).`);
         break;
       case 'empty-history':
@@ -167,7 +182,7 @@ export function initShell(state, syncBoard) {
       case 'quit':
         activeDemo = null;
         state.engine = new state.engine.constructor();
-        syncBoard();
+        board.sync();
         appendBlock('Bye.');
         appendBlock(renderGame(engine().getGame()));
         setStatus('Session reset to a fresh board.');
@@ -228,9 +243,9 @@ export function initShell(state, syncBoard) {
 
   appendBlock(renderGame(engine().getGame()));
   appendBlock(HELP);
-  syncBoard();
+  board.sync();
   syncPrompt();
   input.focus();
 
-  return { submitCommand, movableSquares, targetsFrom };
+  return { submitCommand, movableSquares, targetsFrom, pathFor };
 }
