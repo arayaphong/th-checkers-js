@@ -915,3 +915,38 @@ describe('Game - Bitwise move generation', () => {
     expect(game.getMoveSequence().length).toBe(moves);
   });
 });
+
+// ============================================================================
+// 15. Game - Rules semantics: capture is mandatory but not maximal
+// ============================================================================
+// Thai checkers forces a capturing player to capture (no quiet moves are
+// offered when any capture exists) but does NOT require taking the longest
+// capture — unlike international draughts. This pins both halves of that rule.
+describe('Game - Capture mandatory but not maximal', () => {
+  test('Offers captures of different lengths and no quiet moves', () => {
+    const pieces = new Map([
+      // Left region: A6 has a forced double capture (×B5 →C4 ×D3 →E2).
+      [Position.fromString('A6'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B5'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('D3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      // Right region: H5 has a single capture (×G4 →F3).
+      [Position.fromString('H5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('G4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    expect(game.player()).toBe(PieceColor.WHITE);
+
+    const moves = game.getMoves();
+    // Mandatory: every offered move is a capture (no quiet A6/H5 step moves).
+    expect(moves.every((m) => m.captured.length > 0)).toBe(true);
+
+    // Not maximal: the single capture (length 1) is still offered alongside the
+    // double capture (length 2). A maximal-capture rule would forbid the H5 move.
+    const lengths = moves.map((m) => m.captured.length).sort();
+    expect(lengths).toEqual([1, 2]);
+
+    const froms = new Set(moves.map((m) => m.from.toString()));
+    expect(froms).toEqual(new Set(['A6', 'H5']));
+  });
+});

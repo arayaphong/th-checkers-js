@@ -900,3 +900,36 @@ describe('Explorer - Dame complex capture sequences', () => {
     expect(pathLengthCounts.get(9)).toBe(18); // 18 sequences with 9 captures
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Rules semantics — captured pieces are removed immediately mid-sequence
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('Explorer - Captured pieces removed immediately during a sequence', () => {
+  // A turning dame double-capture. After capturing D3 (leg 1) and landing on E4,
+  // the dame turns to capture D5 (leg 2). Crucially, looking back along (-1,-1)
+  // from E4 the dame must NOT see D3 again: it was removed the moment it was
+  // captured. If captured pieces were instead held until the chain ended (the
+  // "ghost" rule), that ray would offer a spurious extra capture and size() > 1.
+  test('Dame does not re-capture an already-removed piece', () => {
+    const focus = Position.fromString('C2');
+    const board = Board.fromPieces(
+      pieces(
+        ['C2', PieceColor.WHITE, PieceType.DAME],
+        ['D3', PieceColor.BLACK, PieceType.PION],
+        ['D5', PieceColor.BLACK, PieceType.PION],
+      ),
+    );
+    const analyzer = new Explorer(board);
+
+    const options = analyzer.findValidMoves(focus);
+    expect(options.hasCaptured()).toBe(true);
+    expect(options.size()).toBe(1); // exactly one sequence — D3 is not re-jumped
+
+    const captured = options.getCapturePieces(0);
+    expect(captured.length).toBe(2);
+    const capturedSet = new Set(captured.map((pos) => pos.toString()));
+    expect(capturedSet).toEqual(new Set(['D3', 'D5']));
+
+    expect(options.getPosition(0).equals(Position.fromString('C6'))).toBe(true);
+  });
+});
