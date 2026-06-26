@@ -20,6 +20,42 @@ function encodedWithOccupiedSquares(count) {
   return BigInt(occBits >>> 0) << 32n;
 }
 
+describe('Board - constructor invariants', () => {
+  test('accepts valid raw bitboards', () => {
+    const board = new Board(0b11, 0b01, 0b10);
+
+    expect(board.occBits).toBe(0b11);
+    expect(board.blackBits).toBe(0b01);
+    expect(board.dameBits).toBe(0b10);
+  });
+
+  test('accepts valid raw bitboards that use bit 31', () => {
+    const highBit = 0x8000_0000;
+    const board = new Board(highBit, highBit, highBit);
+
+    expect(board.occBits).toBe(highBit);
+    expect(board.blackBits).toBe(highBit);
+    expect(board.dameBits).toBe(highBit);
+  });
+
+  test('rejects non-uint32 bitboards', () => {
+    expect(() => new Board(0.5)).toThrow(/occBits must be an unsigned 32-bit integer/);
+    expect(() => new Board(2 ** 32)).toThrow(/occBits must be an unsigned 32-bit integer/);
+    expect(() => new Board(0, -1)).toThrow(/blackBits must be an unsigned 32-bit integer/);
+    expect(() => new Board(0, 0, Number.POSITIVE_INFINITY)).toThrow(/dameBits must be an unsigned 32-bit integer/);
+  });
+
+  test('rejects raw boards with more than 16 occupied squares', () => {
+    expect(() => new Board((1 << 17) - 1)).toThrow(RangeError);
+    expect(() => new Board((1 << 17) - 1)).toThrow(/more than 16 pieces/);
+  });
+
+  test('rejects piece metadata on empty squares', () => {
+    expect(() => new Board(0, 1, 0)).toThrow(/blackBits cannot mark empty squares/);
+    expect(() => new Board(0, 0, 1)).toThrow(/dameBits cannot mark empty squares/);
+  });
+});
+
 describe('Board - immutability', () => {
   test('movePiece returns a new board without changing the original', () => {
     const from = Position.fromCoords(1, 2);

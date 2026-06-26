@@ -6,12 +6,19 @@ const MAX_POSITIONS = (BOARD_SIZE * BOARD_SIZE) / 2; // 32
 const FIRST_COLUMN_CODE = 'A'.charCodeAt(0);
 const POSITION_PATTERN = /^(?<col>[A-H])(?<row>[1-8])$/;
 
+function assertValidIndex(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_POSITIONS) {
+        throw new RangeError(`Invalid position index: ${index}`);
+    }
+}
+
 export class Position {
     static BOARD_SIZE = BOARD_SIZE;
     static MAX_POSITIONS = MAX_POSITIONS;
     #index;
     /** Internal: construct from validated index. */
     constructor(index) {
+        assertValidIndex(index);
         this.#index = index;
     }
     /** Factory from coordinates. Throws if not a valid black square. */
@@ -24,9 +31,6 @@ export class Position {
     }
     /** Factory from 0-based index (0..31). */
     static fromIndex(index) {
-        if (!Number.isInteger(index) || index < 0 || index >= MAX_POSITIONS) {
-            throw new Error(`Invalid position index: ${index}`);
-        }
         return new Position(index);
     }
     /** Factory from algebraic notation, e.g. "C4". */

@@ -27,6 +27,14 @@ describe('Position - fromString', () => {
 });
 
 describe('Position - numeric factories', () => {
+  test('constructor rejects invalid indexes', () => {
+    expect(() => new Position(-1)).toThrow(/Invalid position index/);
+    expect(() => new Position(32)).toThrow(/Invalid position index/);
+    expect(() => new Position(0.5)).toThrow(/Invalid position index/);
+    expect(() => new Position(Number.NaN)).toThrow(/Invalid position index/);
+    expect(() => new Position(Number.POSITIVE_INFINITY)).toThrow(/Invalid position index/);
+  });
+
   test('fromCoords rejects fractional coordinates', () => {
     expect(() => Position.fromCoords(1.5, 1.5)).toThrow(/Invalid coordinates/);
     expect(() => Position.fromCoords(0.5, 0.5)).toThrow(/Invalid coordinates/);

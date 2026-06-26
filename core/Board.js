@@ -14,6 +14,14 @@ function bit(idx) {
     return (1 << (idx & 0x1f)) >>> 0;
 }
 
+function setBit(bits, mask) {
+    return (bits | mask) >>> 0;
+}
+
+function clearBit(bits, mask) {
+    return (bits & ~mask) >>> 0;
+}
+
 function popCount32(value) {
     let bits = value >>> 0;
     let count = 0;
@@ -30,6 +38,25 @@ function assertValidPieceCount(count) {
     }
 }
 
+function assertUInt32(name, value) {
+    if (!Number.isInteger(value) || value < 0 || value > Number(LOW_32_BITS)) {
+        throw new RangeError(`${name} must be an unsigned 32-bit integer`);
+    }
+}
+
+function assertValidBitboards(occBits, blackBits, dameBits) {
+    assertUInt32('occBits', occBits);
+    assertUInt32('blackBits', blackBits);
+    assertUInt32('dameBits', dameBits);
+    assertValidPieceCount(popCount32(occBits));
+    if (((blackBits & ~occBits) >>> 0) !== 0) {
+        throw new RangeError('blackBits cannot mark empty squares');
+    }
+    if (((dameBits & ~occBits) >>> 0) !== 0) {
+        throw new RangeError('dameBits cannot mark empty squares');
+    }
+}
+
 function toPieceKey(position) {
     if (position instanceof Position) {
         return position.hash();
@@ -43,6 +70,7 @@ export class Board {
     #blackBits;
     #dameBits;
     constructor(occBits = 0, blackBits = 0, dameBits = 0) {
+        assertValidBitboards(occBits, blackBits, dameBits);
         this.#occBits = occBits >>> 0;
         this.#blackBits = blackBits >>> 0;
         this.#dameBits = dameBits >>> 0;
@@ -60,9 +88,9 @@ export class Board {
             const startCol = row % 2 === 0 ? 1 : 0;
             for (let i = 0; i < 4; i++) {
                 const mask = bit(Position.fromCoords(startCol + i * 2, row).hash());
-                occBits |= mask;
+                occBits = setBit(occBits, mask);
                 if (row < 2)
-                    blackBits |= mask;
+                    blackBits = setBit(blackBits, mask);
             }
         }
         return new Board(occBits, blackBits, 0);
@@ -80,12 +108,12 @@ export class Board {
             seen.add(key);
             assertPieceInfo(info);
             const mask = bit(key);
-            occBits |= mask;
+            occBits = setBit(occBits, mask);
             if (info.color === PieceColor.BLACK) {
-                blackBits |= mask;
+                blackBits = setBit(blackBits, mask);
             }
             if (info.type === PieceType.DAME) {
-                dameBits |= mask;
+                dameBits = setBit(dameBits, mask);
             }
         }
         assertValidPieceCount(popCount32(occBits));
@@ -109,9 +137,9 @@ export class Board {
             if ((occBits & mask) === 0)
                 continue;
             if ((low32 & bit(count)) !== 0)
-                dameBits |= mask;
+                dameBits = setBit(dameBits, mask);
             if ((low32 & bit(count + MAX_PIECES)) !== 0)
-                blackBits |= mask;
+                blackBits = setBit(blackBits, mask);
             count++;
         }
         const board = new Board(occBits, blackBits, dameBits);
@@ -158,7 +186,7 @@ export class Board {
             return this;
         if ((this.#dameBits & mask) !== 0)
             return this;
-        return new Board(this.#occBits, this.#blackBits, this.#dameBits | mask);
+        return new Board(this.#occBits, this.#blackBits, setBit(this.#dameBits, mask));
     }
     movePiece(from, to) {
         const fm = bit(from.hash());
@@ -169,20 +197,24 @@ export class Board {
             return this;
         const wasBlack = (this.#blackBits & fm) !== 0;
         const wasDame = (this.#dameBits & fm) !== 0;
-        const occBits = (this.#occBits & ~fm) | tm;
-        let blackBits = this.#blackBits & ~fm;
-        let dameBits = this.#dameBits & ~fm;
+        const occBits = setBit(clearBit(this.#occBits, fm), tm);
+        let blackBits = clearBit(this.#blackBits, fm);
+        let dameBits = clearBit(this.#dameBits, fm);
         if (wasBlack)
-            blackBits |= tm;
+            blackBits = setBit(blackBits, tm);
         if (wasDame)
-            dameBits |= tm;
+            dameBits = setBit(dameBits, tm);
         return new Board(occBits, blackBits, dameBits);
     }
     removePiece(pos) {
         const mask = bit(pos.hash());
         if ((this.#occBits & mask) === 0)
             return this;
-        return new Board(this.#occBits & ~mask, this.#blackBits & ~mask, this.#dameBits & ~mask);
+        return new Board(
+            clearBit(this.#occBits, mask),
+            clearBit(this.#blackBits, mask),
+            clearBit(this.#dameBits, mask),
+        );
     }
     // ─── Encoding ───
     encode() {
