@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { Game, boardToString } from '../../core/Game.js';
+import { Game } from '../../core/Game.js';
 import { Board } from '../../core/Board.js';
 import { Position } from '../../core/Position.js';
 import { PieceColor, PieceType } from '../../core/Piece.js';
@@ -659,24 +659,6 @@ describe('Game - Board manipulation through game', () => {
     const freshMoves = game.getMoves();
     expect(freshMoves).toHaveLength(moveCount);
     expect(freshMoves[0].captured).toHaveLength(0);
-  });
-});
-
-// ============================================================================
-// 10. Game - Print functions don't crash (2 tests)
-// ============================================================================
-// ADDED: Print functions describe block
-describe('Game - Print functions', () => {
-  test('Print board does not crash', () => {
-    const game = new Game();
-    const board = game.board();
-    expect(() => boardToString(board)).not.toThrow();
-  });
-
-  test('Print choices does not crash', () => {
-    const game = new Game();
-    // boardToString is the closest available; verify it does not throw
-    expect(() => boardToString(game.board())).not.toThrow();
   });
 });
 

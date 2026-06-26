@@ -1,13 +1,9 @@
 // Thai Checkers game state machine
-import { PieceColor, pieceSymbol } from './Piece.js';
+import { PieceColor } from './Piece.js';
 import { Position } from './Position.js';
 import { Board } from './Board.js';
 import { Explorer } from './Explorer.js';
 import { CaptureTrace } from './Legals.js';
-
-const BOARD_RANGE = Object.freeze(
-    Array.from({ length: Position.BOARD_SIZE }, (_, index) => index),
-);
 
 function copyMove(move) {
     return {
@@ -16,25 +12,6 @@ function copyMove(move) {
         captured: [...move.captured],
         trace: move.trace,
     };
-}
-
-export function boardToString(board) {
-    const firstColCode = 'A'.charCodeAt(0);
-    const cols = BOARD_RANGE.map((col) => String.fromCharCode(firstColCode + col));
-    const header = `   ${cols.join(' ')} `;
-    const rows = BOARD_RANGE.map((row) => {
-        const cells = BOARD_RANGE.map((col) => {
-            if ((row + col) % 2 === 0) {
-                return '.';
-            }
-            const pos = Position.fromCoords(col, row);
-            return board.isOccupied(pos)
-                ? pieceSymbol(board.isBlackPiece(pos), board.isDamePiece(pos))
-                : ' ';
-        });
-        return ` ${row + 1} ${cells.join(' ')} `;
-    });
-    return `${[header, ...rows].join('\n')}\n`;
 }
 
 export class Game {
@@ -207,17 +184,5 @@ export class Game {
             cumulative += size;
         }
         throw new RangeError(`Move index ${index} out of range`);
-    }
-    // ─── Debug ───
-    printBoard() {
-        console.log(boardToString(this.board()));
-    }
-    printChoices() {
-        const moves = this.getMoves();
-        console.log(`Moves (${moves.length}):`);
-        for (const m of moves) {
-            const capStr = m.captured.length > 0 ? ` captures ${m.captured.map(c => c.toString()).join(',')}` : '';
-            console.log(`  ${m.from.toString()} -> ${m.to.toString()}${capStr}`);
-        }
     }
 }
