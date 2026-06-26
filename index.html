@@ -1,11 +1,93 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thai Checkers</title>
-  </head>
-  <body>
-    <h1>หมากฮอสไทย สวัสดี!</h1>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thai Checkers</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css" />
+  <link rel="stylesheet" href="./web/css/index.css" />
+  <link rel="stylesheet" href="./web/css/board.css" />
+  <link rel="stylesheet" href="./web/css/shell.css" />
+</head>
+
+<body data-bs-theme="dark">
+  <main>
+    <section class="hero">
+      <h1>Thai Checkers</h1>
+    </section>
+
+    <section class="workspace" aria-label="Thai Checkers workspace">
+      <div class="play-stage">
+        <section class="play-board-shell" aria-label="Play board">
+          <div class="board-layout">
+            <div class="axis axis-col" aria-hidden="true">
+              <span>A</span>
+              <span>B</span>
+              <span>C</span>
+              <span>D</span>
+              <span>E</span>
+              <span>F</span>
+              <span>G</span>
+              <span>H</span>
+            </div>
+            <div class="board-main">
+              <div class="axis axis-row" aria-hidden="true">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+                <span>6</span>
+                <span>7</span>
+                <span>8</span>
+              </div>
+              <div class="board" aria-label="Thai Checkers board"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <details class="shell" aria-label="Thai Checkers REPL simulator">
+        <summary class="shell-bar">
+          <div class="shell-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="shell-title">thai-checkers repl</div>
+        </summary>
+
+        <div class="shell-body">
+          <div id="output" class="output" aria-live="polite"></div>
+
+          <form id="command-form" class="prompt-row">
+            <label for="command-input" id="prompt-label" class="prompt-label">&gt;</label>
+            <input id="command-input" class="command-input" name="command" type="text" autocomplete="off"
+              spellcheck="false" placeholder="Type a command like demo1, trace 1, d5 d1, undo" />
+            <button class="command-button" type="submit">Run</button>
+            <button class="command-button command-button-secondary" type="button" id="clear-button">Clear</button>
+          </form>
+
+          <div class="shortcuts" aria-label="Quick commands">
+            <button class="shortcut-button" type="button" data-command="help">help</button>
+            <button class="shortcut-button" type="button" data-command="moves">moves</button>
+            <button class="shortcut-button" type="button" data-command="new">new</button>
+            <button class="shortcut-button" type="button" data-command="undo">undo</button>
+            <button class="shortcut-button" type="button" data-command="redo">redo</button>
+            <button class="shortcut-button" type="button" data-command="demo1">demo1</button>
+            <button class="shortcut-button" type="button" data-command="demo2">demo2</button>
+            <button class="shortcut-button" type="button" data-command="demo3">demo3</button>
+            <button class="shortcut-button" type="button" data-command="demo4">demo4</button>
+          </div>
+
+          <div id="status-line" class="status-line">Ready.</div>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <script type="module" src="./web/js/index.js"></script>
+</body>
+
 </html>

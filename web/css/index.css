@@ -1,0 +1,55 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c1118;
+  --panel: #111827;
+  --panel-border: #273244;
+  --text: #e6edf7;
+  --muted: #9fb3cc;
+  --accent: #38bdf8;
+  --accent-strong: #7dd3fc;
+  --danger: #fb7185;
+  font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 28%),
+    linear-gradient(180deg, #101826 0%, var(--bg) 100%);
+  color: var(--text);
+}
+
+main {
+  width: min(960px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+.hero {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.workspace {
+  display: grid;
+  gap: 20px;
+}
+
+.play-stage {
+  display: grid;
+  gap: 16px;
+}

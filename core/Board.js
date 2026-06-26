@@ -9,9 +9,14 @@ const LOW_16_BITS = 0xffff;
 const LOW_32_BITS = 0xffff_ffffn;
 const HOME_ROWS = Object.freeze([0, 1, 6, 7]);
 
-/** 1 << idx as unsigned 32-bit integer */
+/** 1 << idx as unsigned 32-bit integer (idx must be an integer 0..31).
+ *  Guards explicitly because JS `<<` silently masks the shift count to 5 bits,
+ *  which would otherwise turn an out-of-range index into a wrong-bit result. */
 function bit(idx) {
-    return (1 << (idx & 0x1f)) >>> 0;
+    if (!Number.isInteger(idx) || idx < 0 || idx > 31) {
+        throw new RangeError(`Bit index out of range: ${idx}`);
+    }
+    return (1 << idx) >>> 0;
 }
 
 function setBit(bits, mask) {
@@ -64,17 +69,28 @@ function toPieceKey(position) {
     return Position.fromIndex(position).hash();
 }
 
+// Token allowing internal transforms to build a Board from bitboards that are
+// already known to satisfy the invariants, skipping the full revalidation.
+const TRUSTED = Symbol('Board.trusted');
+
 export class Board {
     // Bitboards — each bit i corresponds to Position.fromIndex(i)
     #occBits;
     #blackBits;
     #dameBits;
-    constructor(occBits = 0, blackBits = 0, dameBits = 0) {
-        assertValidBitboards(occBits, blackBits, dameBits);
+    constructor(occBits = 0, blackBits = 0, dameBits = 0, trusted = undefined) {
+        if (trusted !== TRUSTED) {
+            assertValidBitboards(occBits, blackBits, dameBits);
+        }
         this.#occBits = occBits >>> 0;
         this.#blackBits = blackBits >>> 0;
         this.#dameBits = dameBits >>> 0;
         Object.freeze(this);
+    }
+    /** Build from bitboards already known to satisfy the invariants (produced by
+     *  transforming an existing valid Board), bypassing revalidation. */
+    static #unchecked(occBits, blackBits, dameBits) {
+        return new Board(occBits, blackBits, dameBits, TRUSTED);
     }
     // ─── Factories ───
     static empty() {
@@ -120,7 +136,7 @@ export class Board {
         return new Board(occBits, blackBits, dameBits);
     }
     static copy(other) {
-        return new Board(other.#occBits, other.#blackBits, other.#dameBits);
+        return Board.#unchecked(other.#occBits, other.#blackBits, other.#dameBits);
     }
     static decode(encoded) {
         if (encoded < 0n || encoded > MAX_ENCODED) {
@@ -158,10 +174,12 @@ export class Board {
         return (this.#occBits & bit(pos.hash())) !== 0;
     }
     isBlackPiece(pos) {
-        return (this.#blackBits & bit(pos.hash())) !== 0;
+        const mask = bit(pos.hash());
+        return (this.#occBits & mask) !== 0 && (this.#blackBits & mask) !== 0;
     }
     isDamePiece(pos) {
-        return (this.#dameBits & bit(pos.hash())) !== 0;
+        const mask = bit(pos.hash());
+        return (this.#occBits & mask) !== 0 && (this.#dameBits & mask) !== 0;
     }
     getPieces(color) {
         assertPieceColor(color);
@@ -188,7 +206,7 @@ export class Board {
         if ((this.#dameBits & mask) !== 0) {
             throw new Error(`Cannot promote dame piece: ${pos.toString()}`);
         }
-        return new Board(this.#occBits, this.#blackBits, setBit(this.#dameBits, mask));
+        return Board.#unchecked(this.#occBits, this.#blackBits, setBit(this.#dameBits, mask));
     }
     movePiece(from, to) {
         const fm = bit(from.hash());
@@ -208,14 +226,14 @@ export class Board {
             blackBits = setBit(blackBits, tm);
         if (wasDame)
             dameBits = setBit(dameBits, tm);
-        return new Board(occBits, blackBits, dameBits);
+        return Board.#unchecked(occBits, blackBits, dameBits);
     }
     removePiece(pos) {
         const mask = bit(pos.hash());
         if ((this.#occBits & mask) === 0) {
             throw new Error(`Cannot remove from empty square: ${pos.toString()}`);
         }
-        return new Board(
+        return Board.#unchecked(
             clearBit(this.#occBits, mask),
             clearBit(this.#blackBits, mask),
             clearBit(this.#dameBits, mask),

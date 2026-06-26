@@ -1,0 +1,12 @@
+{
+  "id": "demo1",
+  "title": "Demo 1: branching chain capture with the same final landing.",
+  "description": "Demo 1: branching chain capture with the same final landing.\n\nThe white pion on D5 has two capture sequences that both end on D1:\n  1) D5 -> B3 -> D1   capturing C4, then C2\n  2) D5 -> F3 -> D1   capturing E4, then E2\n\nIn the REPL, try:\n  > d5 d1\nThe app will ask you to pick which capture path to use.\n",
+  "pieces": [
+    ["D5", { "color": "WHITE", "type": "PION" }],
+    ["C4", { "color": "BLACK", "type": "PION" }],
+    ["E4", { "color": "BLACK", "type": "PION" }],
+    ["C2", { "color": "BLACK", "type": "PION" }],
+    ["E2", { "color": "BLACK", "type": "PION" }]
+  ]
+}

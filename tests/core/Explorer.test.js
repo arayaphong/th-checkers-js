@@ -881,9 +881,9 @@ describe('Explorer - Dame complex capture sequences', () => {
     const moves = analyzer.findValidMoves(focus);
     expect(moves.hasCaptured()).toBe(true);
 
-    // The explorer deduplicates sequences by captured set + final landing.
+    // The explorer deduplicates sequences by full path.
     const sequenceCount = moves.size();
-    expect(sequenceCount).toBe(22);
+    expect(sequenceCount).toBe(51);
 
     // Verify path length distribution
     const pathLengthCounts = new Map();
@@ -893,10 +893,43 @@ describe('Explorer - Dame complex capture sequences', () => {
       pathLengthCounts.set(len, (pathLengthCounts.get(len) ?? 0) + 1);
     }
 
-    expect(pathLengthCounts.get(3)).toBe(2);  // 2 sequences with 3 captures
-    expect(pathLengthCounts.get(6)).toBe(6);  // 6 sequences with 6 captures
-    expect(pathLengthCounts.get(7)).toBe(10); // 10 sequences with 7 captures
+    expect(pathLengthCounts.get(3)).toBe(3);  // 3 sequences with 3 captures
+    expect(pathLengthCounts.get(6)).toBe(14); // 14 sequences with 6 captures
+    expect(pathLengthCounts.get(7)).toBe(14); // 14 sequences with 7 captures
     expect(pathLengthCounts.get(8)).toBe(2);  // 2 sequences with 8 captures
-    expect(pathLengthCounts.get(9)).toBe(2);  // 2 sequences with 9 captures
+    expect(pathLengthCounts.get(9)).toBe(18); // 18 sequences with 9 captures
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Rules semantics — captured pieces are removed immediately mid-sequence
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('Explorer - Captured pieces removed immediately during a sequence', () => {
+  // A turning dame double-capture. After capturing D3 (leg 1) and landing on E4,
+  // the dame turns to capture D5 (leg 2). Crucially, looking back along (-1,-1)
+  // from E4 the dame must NOT see D3 again: it was removed the moment it was
+  // captured. If captured pieces were instead held until the chain ended (the
+  // "ghost" rule), that ray would offer a spurious extra capture and size() > 1.
+  test('Dame does not re-capture an already-removed piece', () => {
+    const focus = Position.fromString('C2');
+    const board = Board.fromPieces(
+      pieces(
+        ['C2', PieceColor.WHITE, PieceType.DAME],
+        ['D3', PieceColor.BLACK, PieceType.PION],
+        ['D5', PieceColor.BLACK, PieceType.PION],
+      ),
+    );
+    const analyzer = new Explorer(board);
+
+    const options = analyzer.findValidMoves(focus);
+    expect(options.hasCaptured()).toBe(true);
+    expect(options.size()).toBe(1); // exactly one sequence — D3 is not re-jumped
+
+    const captured = options.getCapturePieces(0);
+    expect(captured.length).toBe(2);
+    const capturedSet = new Set(captured.map((pos) => pos.toString()));
+    expect(capturedSet).toEqual(new Set(['D3', 'D5']));
+
+    expect(options.getPosition(0).equals(Position.fromString('C6'))).toBe(true);
   });
 });

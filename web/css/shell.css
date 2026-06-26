@@ -1,0 +1,173 @@
+.shell {
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 420px;
+  height: auto;
+  background: rgba(11, 17, 28, 0.88);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.shell:not([open]) {
+  min-height: auto;
+}
+
+.shell:not([open]) .shell-body {
+  display: none;
+}
+
+.shell-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  list-style: none;
+}
+
+.shell-bar::-webkit-details-marker {
+  display: none;
+}
+
+.shell-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.shell-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+.shell-title {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.shell-body {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.output {
+  min-height: 420px;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(224, 168, 79, 0.14);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.88), rgba(8, 12, 20, 0.96));
+  font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.prompt-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  gap: 8px;
+  align-items: center;
+}
+
+.prompt-label {
+  color: var(--accent-strong);
+  font-weight: 700;
+  justify-self: end;
+}
+
+.command-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+}
+
+.command-input:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.command-button,
+.shortcut-button {
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 11px 16px;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.command-button-secondary {
+  border-color: var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+}
+
+.command-button:hover,
+.shortcut-button:hover {
+  background: rgba(56, 189, 248, 0.2);
+  transform: translateY(-1px);
+}
+
+.command-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shortcut-button {
+  border-color: var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  padding: 9px 12px;
+}
+
+.shortcut-button.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.14);
+}
+
+.status-line {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.status-line.error {
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .prompt-row {
+    grid-template-columns: 1fr;
+  }
+
+  .command-button-secondary,
+  .command-button {
+    width: 100%;
+  }
+}

@@ -44,17 +44,11 @@ export class Explorer {
     // ─── capture sequence finding ───
     #findAllCaptureSequences(from, color, isDame) {
         const results = this.#findCapturesFrom(this.#board, from, color, isDame, []);
-        // Deduplicate: same captured set + same landing = same sequence
+        // Deduplicate: same full path = same sequence
         const seen = new Set();
         const deduped = [];
         for (const seq of results) {
-            const captures = seq.filter((_, i) => i % 2 === 0);
-            const landing = seq.at(-1);
-            const capturedKey = captures
-                .map((captured) => captured.hash())
-                .toSorted((a, b) => a - b)
-                .join(',');
-            const key = `${capturedKey}|${landing.hash()}`;
+            const key = seq.map((pos) => pos.hash()).join(',');
             if (!seen.has(key)) {
                 seen.add(key);
                 deduped.push(seq);
@@ -94,37 +88,41 @@ export class Explorer {
         return color === PieceColor.WHITE ? pos.y === 0 : pos.y === 7;
     }
     #isOpponentPiece(board, pos, myColor) {
+        // Guard occupancy here too: for BLACK, "opponent" is "not black", which
+        // would otherwise wrongly include empty squares.
+        if (!board.isOccupied(pos)) {
+            return false;
+        }
         return myColor === PieceColor.WHITE ? board.isBlackPiece(pos) : !board.isBlackPiece(pos);
     }
-    // ─── find all captures in one direction (dame can have multiple landings) ───
+    // ─── find the capture available in one direction (at most one) ───
     #findCapturesInDir(board, from, dir, isDame) {
         const myColor = board.isBlackPiece(from) ? PieceColor.BLACK : PieceColor.WHITE;
-        const results = [];
         const { dx, dy } = dir;
         if (isDame) {
+            // Flying dame: glide over empty squares to the first opponent, then
+            // land on the single empty square immediately behind it (Thai "short
+            // king" rule — no choice of a farther landing square).
             let x = from.x + dx;
             let y = from.y + dy;
             let foundOpponent = null;
             while (Position.isValid(x, y)) {
                 const pos = Position.fromCoords(x, y);
                 if (board.isOccupied(pos)) {
-                    const isOpp = this.#isOpponentPiece(board, pos, myColor);
-                    if (isOpp && !foundOpponent) {
-                        foundOpponent = pos;
+                    // A blocker before any opponent, or a second piece behind the
+                    // captured one, ends this ray with no capture.
+                    if (foundOpponent || !this.#isOpponentPiece(board, pos, myColor)) {
+                        return [];
                     }
-                    else {
-                        break;
-                    }
+                    foundOpponent = pos;
                 }
                 else if (foundOpponent) {
-                    // Dame lands on first empty square immediately behind captured piece
-                    results.push([foundOpponent, pos]);
-                    break;
+                    return [[foundOpponent, pos]];
                 }
                 x += dx;
                 y += dy;
             }
-            return results;
+            return [];
         }
         // Pion: single square capture
         const midX = from.x + dx;

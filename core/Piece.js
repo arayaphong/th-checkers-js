@@ -21,9 +21,13 @@ const PIECE_TYPE_NAMES = new Map([
     [PieceType.PION, 'PION'],
     [PieceType.DAME, 'DAME'],
 ]);
+// Terminal glyphs indexed as PIECE_SYMBOLS[isBlack][isDame].
+// Intentional convention: WHITE uses the filled glyphs (\u25CF/\u25A0) and BLACK uses the
+// hollow ones (\u25CB/\u25A1) \u2014 the inverse of "filled = black". Keep it in sync if the
+// renderer's expectations change.
 const PIECE_SYMBOLS = Object.freeze([
-    Object.freeze(['\u25CF', '\u25A0']),
-    Object.freeze(['\u25CB', '\u25A1']),
+    Object.freeze(['\u25CF', '\u25A0']), // WHITE: pion \u25CF, dame \u25A0
+    Object.freeze(['\u25CB', '\u25A1']), // BLACK: pion \u25CB, dame \u25A1
 ]);
 
 export function isPieceColor(color) {

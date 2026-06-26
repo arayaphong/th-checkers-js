@@ -9,6 +9,7 @@ function copyMove(move) {
         from: move.from,
         to: move.to,
         captured: [...move.captured],
+        path: [...move.path],
         trace: move.trace,
     };
 }
@@ -88,8 +89,10 @@ export class Game {
         for (const cap of move.captured) {
             next = next.removePiece(cap);
         }
-        // Move piece
-        next = next.movePiece(move.from, move.to);
+        // Move piece (skip when from == to, e.g. a dame loop capture).
+        if (!move.from.equals(move.to)) {
+            next = next.movePiece(move.from, move.to);
+        }
         // Promotion check
         const movedIsBlack = current.isBlackPiece(move.from);
         const color = movedIsBlack ? PieceColor.BLACK : PieceColor.WHITE;
@@ -134,7 +137,7 @@ export class Game {
         return this.#moveableCache.values().some(legals => legals.hasCaptured());
     }
     #toMove(from, info) {
-        const move = { from, to: info.targetPosition, captured: [...info.capturedPositions] };
+        const move = { from, to: info.targetPosition, captured: [...info.capturedPositions], path: [from, ...info.path] };
         if (info.capturedPositions.length > 0) {
             move.trace = new CaptureTrace([...info.sequence]);
         }
