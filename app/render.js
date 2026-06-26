@@ -3,6 +3,7 @@
 // string out) so it is easy to unit-test and the Repl stays thin.
 
 import { boardToString } from './utils/BoardRenderer.js';
+import { expandRoute } from './utils/route.js';
 import { PieceColor, toStringPieceColor } from '../core/Piece.js';
 
 /**
@@ -21,7 +22,9 @@ export function formatMove(move) {
 }
 
 /**
- * Format the full trace/path of a move, e.g. "D5 -> B3 -> D1 [x C4,C2]".
+ * Format the full continuous path of a move, listing every square the piece
+ * passes through (not just the landing waypoints) so the trail is gap-free,
+ * e.g. "D5 -> C4 -> B3 -> C2 -> D1 [x C4,C2]".
  * @param {import('../core/Game.js').Move} move
  * @returns {string}
  */
@@ -30,7 +33,7 @@ export function formatTrace(move) {
     move.captured.length > 0
       ? ` [x ${move.captured.map((c) => c.toString()).join(',')}]`
       : '';
-  return `${move.path.map((p) => p.toString()).join(' -> ')}${captures}`;
+  return `${expandRoute(move.path).map((p) => p.toString()).join(' -> ')}${captures}`;
 }
 
 /**

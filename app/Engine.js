@@ -6,6 +6,7 @@ import { Game } from '../core/Game.js';
 import { PieceColor } from '../core/Piece.js';
 import { Position } from '../core/Position.js';
 import { createDemoGame, DEMO_IDS, explainDemo } from './demo/index.js';
+import { expandRoute } from './utils/route.js';
 
 const COLOR_NAMES = new Map([
   [PieceColor.WHITE, 'WHITE'],
@@ -55,7 +56,7 @@ function serializeMove(move, index) {
     from: serializePosition(move.from),
     to: serializePosition(move.to),
     captured: move.captured.map(serializePosition),
-    path: move.path.map(serializePosition),
+    path: expandRoute(move.path).map(serializePosition),
     trace: move.trace ? move.trace.toString() : null,
   };
 }
