@@ -82,12 +82,12 @@ export class Engine {
    * @param {Game} [game]
    */
   constructor(game) {
-    this.#game = game ?? new Game();
+    this.#game = game ? Game.copy(game) : new Game();
   }
 
-  /** Current Game instance, kept for adapters that still render from Game. */
+  /** Snapshot of the current Game, kept for adapters that still render from Game. */
   getGame() {
-    return this.#game;
+    return Game.copy(this.#game);
   }
 
   isPickingMove() {

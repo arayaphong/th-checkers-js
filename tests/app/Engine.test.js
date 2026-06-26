@@ -2,6 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 
 import { Engine } from '../../app/Engine.js';
 import { createDemo3Game, createDemo4Game } from '../../app/demo/index.js';
+import { Game } from '../../core/Game.js';
 import { Position } from '../../core/Position.js';
 
 describe('Engine state data', () => {
@@ -21,6 +22,28 @@ describe('Engine state data', () => {
       captured: expect.any(Array),
       path: expect.any(Array),
     });
+  });
+
+  test('getGame returns a defensive copy of engine state', () => {
+    const engine = new Engine();
+    const before = engine.getState();
+    const exposed = engine.getGame();
+
+    exposed.selectMove(0);
+
+    expect(engine.getState()).toEqual(before);
+    expect(exposed.getMoveSequence()).toEqual([0]);
+  });
+
+  test('constructor copies injected game state', () => {
+    const game = new Game();
+    const engine = new Engine(game);
+    const before = engine.getState();
+
+    game.selectMove(0);
+
+    expect(engine.getState()).toEqual(before);
+    expect(game.getMoveSequence()).toEqual([0]);
   });
 });
 

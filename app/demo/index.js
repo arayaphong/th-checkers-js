@@ -66,7 +66,10 @@ function loadDemoJson(id) {
       const url = new URL(`./${id}.json`, import.meta.url);
       const raw = await readDemoText(url);
       return JSON.parse(raw);
-    })();
+    })().catch((err) => {
+      DEMO_CACHE.delete(id);
+      throw err;
+    });
     DEMO_CACHE.set(id, pending);
   }
   return pending;
