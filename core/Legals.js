@@ -13,31 +13,30 @@ function copyMoveInfo(move) {
         targetPosition: move.targetPosition,
         capturedPositions: [...move.capturedPositions],
         path: [...move.path],
-        sequence: move.sequence ? [...move.sequence] : undefined,
+        sequence: move.sequence?.toSpliced(),
     };
 }
+
 function assertPosition(value, context) {
     if (!(value instanceof Position)) {
         throw new TypeError(`${context} must be a Position`);
     }
 }
+
 function assertValidCaptureSequence(seq, context = 'Capture sequence') {
     if (seq.length === 0 || seq.length % 2 !== 0) {
         throw new Error('Capture sequence must contain captured/landing position pairs');
     }
-    for (let i = 0; i < seq.length; i++) {
-        assertPosition(seq[i], `${context} item ${i}`);
+    for (const [index, position] of seq.entries()) {
+        assertPosition(position, `${context} item ${index}`);
     }
 }
+
 function processCaptureSequence(seq) {
     assertValidCaptureSequence(seq);
     // Even indices = captured pieces, odd indices = landing positions
-    const captured = [];
-    const path = [];
-    for (let i = 0; i < seq.length; i += 2) {
-        captured.push(seq[i]);
-        path.push(seq[i + 1]);
-    }
+    const captured = seq.values().filter((_, index) => index % 2 === 0).toArray();
+    const path = seq.values().filter((_, index) => index % 2 === 1).toArray();
     return {
         targetPosition: seq.at(-1), // last element = final landing
         capturedPositions: captured,
@@ -58,20 +57,24 @@ export class CaptureTrace {
         return this.#sequence.length / 2;
     }
     get captured() {
-        return this.#sequence.filter((_, i) => i % 2 === 0);
+        return this.#sequence.values().filter((_, index) => index % 2 === 0).toArray();
     }
     path(from) {
-        return [from, ...this.#sequence.filter((_, i) => i % 2 === 1)];
+        return [
+            from,
+            ...this.#sequence.values().filter((_, index) => index % 2 === 1).toArray(),
+        ];
     }
     get finalLanding() {
         return this.#sequence.at(-1);
     }
     toString() {
-        const parts = [];
-        for (let i = 0; i < this.#sequence.length; i += 2) {
-            parts.push(`×${this.#sequence[i].toString()} →${this.#sequence[i + 1].toString()}`);
-        }
-        return parts.join(' ');
+        return this.#sequence
+            .values()
+            .filter((_, index) => index % 2 === 0)
+            .map((captured, index) => `×${captured.toString()} →${this.#sequence[(index * 2) + 1].toString()}`)
+            .toArray()
+            .join(' ');
     }
 }
 export class Legals {
@@ -85,7 +88,7 @@ export class Legals {
             return;
         }
         // Type detection: first item is Position or array
-        if (Array.isArray(items[0])) {
+        if (Array.isArray(items.at(0))) {
             this.#hasCaptures = true;
             this.#moves = items.map((item, index) => {
                 if (!Array.isArray(item)) {

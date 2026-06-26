@@ -4,6 +4,11 @@ import { Position } from './Position.js';
 import { Board } from './Board.js';
 import { Explorer } from './Explorer.js';
 import { CaptureTrace } from './Legals.js';
+
+const BOARD_RANGE = Object.freeze(
+    Array.from({ length: Position.BOARD_SIZE }, (_, index) => index),
+);
+
 function copyMove(move) {
     return {
         from: move.from,
@@ -12,11 +17,13 @@ function copyMove(move) {
         trace: move.trace,
     };
 }
+
 export function boardToString(board) {
-    const cols = Array.from({ length: 8 }, (_, col) => String.fromCharCode('A'.charCodeAt(0) + col));
+    const firstColCode = 'A'.charCodeAt(0);
+    const cols = BOARD_RANGE.map((col) => String.fromCharCode(firstColCode + col));
     const header = `   ${cols.join(' ')} `;
-    const rows = Array.from({ length: 8 }, (_, row) => {
-        const cells = Array.from({ length: 8 }, (_, col) => {
+    const rows = BOARD_RANGE.map((row) => {
+        const cells = BOARD_RANGE.map((col) => {
             if ((row + col) % 2 === 0) {
                 return '.';
             }
@@ -29,6 +36,7 @@ export function boardToString(board) {
     });
     return `${[header, ...rows].join('\n')}\n`;
 }
+
 export class Game {
     #boardHistory = [];
     #encodedHistory = [];
@@ -131,22 +139,21 @@ export class Game {
         if (!this.#moveableDirty)
             return;
         this.#moveableDirty = false;
-        this.#moveableCache.clear();
-        this.#sortedPositionsCache = [];
         const board = this.board();
         const color = this.player();
-        const pieces = board.getPieces(color);
-        for (const [index] of pieces) {
-            const pos = Position.fromIndex(index);
-            const explorer = new Explorer(board);
-            const legals = explorer.findValidMoves(pos);
-            if (!legals.empty()) {
-                this.#moveableCache.set(pos, legals);
-                this.#sortedPositionsCache.push(pos);
-            }
-        }
-        // Sort positions for deterministic ordering
-        this.#sortedPositionsCache.sort((a, b) => a.compare(b));
+        const explorer = new Explorer(board);
+
+        this.#moveableCache = board.getPieces(color)
+            .keys()
+            .map((index) => Position.fromIndex(index))
+            .map((pos) => [pos, explorer.findValidMoves(pos)])
+            .filter(([, legals]) => !legals.empty())
+            .reduce((moveable, [pos, legals]) => moveable.set(pos, legals), new Map());
+
+        this.#sortedPositionsCache = this.#moveableCache
+            .keys()
+            .toArray()
+            .toSorted((a, b) => a.compare(b));
     }
     #hasMandatoryCapture() {
         return this.#moveableCache.values().some(legals => legals.hasCaptured());
@@ -165,18 +172,15 @@ export class Game {
             .reduce((count, legals) => count + legals.size(), 0);
     }
     #buildAllMoves() {
-        const moves = [];
         const hasCaptures = this.#hasMandatoryCapture();
-        for (const pos of this.#sortedPositionsCache) {
-            const legals = this.#moveableCache.get(pos);
+        return this.#sortedPositionsCache
+            .values()
             // If captures exist anywhere, only include capture moves
-            if (hasCaptures && !legals.hasCaptured())
-                continue;
-            for (let i = 0; i < legals.size(); i++) {
-                moves.push(this.#toMove(pos, legals.getMoveInfo(i)));
-            }
-        }
-        return moves;
+            .filter((pos) => !hasCaptures || this.#moveableCache.get(pos).hasCaptured())
+            .flatMap((pos) => Iterator
+                .from(this.#moveableCache.get(pos))
+                .map((info) => this.#toMove(pos, info)))
+            .toArray();
     }
     #assertValidMoveIndex(index) {
         if (!Number.isInteger(index)) {

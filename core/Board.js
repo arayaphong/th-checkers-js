@@ -1,13 +1,19 @@
 // Bitboard-based 8×8 Thai Checkers board (32 playable dark squares)
-import { PieceColor, PieceType, assertPieceColor, assertPieceInfo, } from './Piece.js';
+import { PieceColor, PieceType, assertPieceColor, assertPieceInfo } from './Piece.js';
 import { Position } from './Position.js';
+
 const BOARD_SQUARES = 32;
 const MAX_PIECES = 16;
 const MAX_ENCODED = (1n << 64n) - 1n;
+const LOW_16_BITS = 0xffff;
+const LOW_32_BITS = 0xffff_ffffn;
+const HOME_ROWS = Object.freeze([0, 1, 6, 7]);
+
 /** 1 << idx as unsigned 32-bit integer */
 function bit(idx) {
     return (1 << (idx & 0x1f)) >>> 0;
 }
+
 function popCount32(value) {
     let bits = value >>> 0;
     let count = 0;
@@ -17,18 +23,20 @@ function popCount32(value) {
     }
     return count;
 }
+
 function assertValidPieceCount(count) {
     if (count > MAX_PIECES) {
         throw new RangeError(`Thai checkers boards cannot contain more than ${MAX_PIECES} pieces`);
     }
 }
+
 function toPieceKey(position) {
     if (position instanceof Position) {
         return position.hash();
     }
-    Position.fromIndex(position);
-    return position;
+    return Position.fromIndex(position).hash();
 }
+
 export class Board {
     // Bitboards — each bit i corresponds to Position.fromIndex(i)
     #occBits;
@@ -48,7 +56,7 @@ export class Board {
         let occBits = 0;
         let blackBits = 0;
         // Black home rows are 0-1, white home rows are 6-7 (white stays unset in blackBits)
-        for (const row of [0, 1, 6, 7]) {
+        for (const row of HOME_ROWS) {
             const startCol = row % 2 === 0 ? 1 : 0;
             for (let i = 0; i < 4; i++) {
                 const mask = bit(Position.fromCoords(startCol + i * 2, row).hash());
@@ -76,14 +84,8 @@ export class Board {
             if (info.color === PieceColor.BLACK) {
                 blackBits |= mask;
             }
-            else {
-                blackBits &= ~mask;
-            }
             if (info.type === PieceType.DAME) {
                 dameBits |= mask;
-            }
-            else {
-                dameBits &= ~mask;
             }
         }
         assertValidPieceCount(popCount32(occBits));
@@ -96,19 +98,19 @@ export class Board {
         if (encoded < 0n || encoded > MAX_ENCODED) {
             throw new RangeError('Encoded board must be an unsigned 64-bit value');
         }
-        const occBits = Number((encoded >> 32n) & 0xffffffffn) >>> 0;
+        const occBits = Number((encoded >> 32n) & LOW_32_BITS) >>> 0;
         assertValidPieceCount(popCount32(occBits));
         let blackBits = 0;
         let dameBits = 0;
-        const low32 = Number(encoded & 0xffffffffn) >>> 0;
+        const low32 = Number(encoded & LOW_32_BITS) >>> 0;
         let count = 0;
         for (let i = 0; i < BOARD_SQUARES && count < MAX_PIECES; i++) {
             const mask = bit(i);
             if ((occBits & mask) === 0)
                 continue;
-            if ((low32 & (1 << count)) !== 0)
+            if ((low32 & bit(count)) !== 0)
                 dameBits |= mask;
-            if ((low32 & (1 << (count + MAX_PIECES))) !== 0)
+            if ((low32 & bit(count + MAX_PIECES)) !== 0)
                 blackBits |= mask;
             count++;
         }
@@ -135,21 +137,19 @@ export class Board {
     }
     getPieces(color) {
         assertPieceColor(color);
-        const out = new Map();
-        for (let i = 0; i < BOARD_SQUARES; i++) {
-            const mask = bit(i);
-            if ((this.#occBits & mask) === 0)
-                continue;
-            const isBlack = (this.#blackBits & mask) !== 0;
-            if ((color === PieceColor.BLACK) !== isBlack)
-                continue;
-            const isDame = (this.#dameBits & mask) !== 0;
-            out.set(i, {
-                color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
-                type: isDame ? PieceType.DAME : PieceType.PION,
-            });
-        }
-        return out;
+        return Position.allValid()
+            .values()
+            .filter((pos) => (this.#occBits & bit(pos.hash())) !== 0)
+            .filter((pos) => (color === PieceColor.BLACK) === this.isBlackPiece(pos))
+            .reduce((pieces, pos) => {
+                const mask = bit(pos.hash());
+                const isBlack = (this.#blackBits & mask) !== 0;
+                const isDame = (this.#dameBits & mask) !== 0;
+                return pieces.set(pos.hash(), {
+                    color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
+                    type: isDame ? PieceType.DAME : PieceType.PION,
+                });
+            }, new Map());
     }
     // ─── Transformations ───
     promotePiece(pos) {
@@ -194,14 +194,14 @@ export class Board {
             if ((this.#occBits & mask) === 0)
                 continue;
             if ((this.#dameBits & mask) !== 0)
-                damePacked |= (1 << count);
+                damePacked |= bit(count);
             if ((this.#blackBits & mask) !== 0)
-                blackPacked |= (1 << count);
+                blackPacked |= bit(count);
             count++;
         }
         return (BigInt(this.#occBits >>> 0) << 32n)
-            | (BigInt(blackPacked & 0xffff) << 16n)
-            | BigInt(damePacked & 0xffff);
+            | (BigInt(blackPacked & LOW_16_BITS) << 16n)
+            | BigInt(damePacked & LOW_16_BITS);
     }
     // ─── Accessors ───
     get occBits() { return this.#occBits >>> 0; }

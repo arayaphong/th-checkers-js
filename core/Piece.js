@@ -9,12 +9,29 @@ export const PieceType = Object.freeze({
     DAME: 1,
 });
 
+const enumValues = (enumLike) => new Set(Object.values(enumLike));
+
+const PIECE_COLORS = enumValues(PieceColor);
+const PIECE_TYPES = enumValues(PieceType);
+const PIECE_COLOR_NAMES = new Map([
+    [PieceColor.WHITE, 'WHITE'],
+    [PieceColor.BLACK, 'BLACK'],
+]);
+const PIECE_TYPE_NAMES = new Map([
+    [PieceType.PION, 'PION'],
+    [PieceType.DAME, 'DAME'],
+]);
+const PIECE_SYMBOLS = Object.freeze([
+    Object.freeze(['\u25CF', '\u25A0']),
+    Object.freeze(['\u25CB', '\u25A1']),
+]);
+
 export function isPieceColor(color) {
-    return color === PieceColor.WHITE || color === PieceColor.BLACK;
+    return PIECE_COLORS.has(color);
 }
 
 export function isPieceType(type) {
-    return type === PieceType.PION || type === PieceType.DAME;
+    return PIECE_TYPES.has(type);
 }
 
 export function assertPieceColor(color) {
@@ -38,15 +55,15 @@ export function assertPieceInfo(info) {
 }
 
 export function pieceSymbol(isBlack, isDame) {
-    return isBlack ? (isDame ? '\u25A1' : '\u25CB') : (isDame ? '\u25A0' : '\u25CF');
+    return PIECE_SYMBOLS[Number(Boolean(isBlack))][Number(Boolean(isDame))];
 }
 
 export function toStringPieceColor(color) {
     assertPieceColor(color);
-    return color === PieceColor.WHITE ? 'WHITE' : 'BLACK';
+    return PIECE_COLOR_NAMES.get(color);
 }
 
 export function toStringPieceType(type) {
     assertPieceType(type);
-    return type === PieceType.PION ? 'PION' : 'DAME';
+    return PIECE_TYPE_NAMES.get(type);
 }

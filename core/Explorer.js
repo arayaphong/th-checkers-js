@@ -2,17 +2,22 @@
 import { PieceColor } from './Piece.js';
 import { Position } from './Position.js';
 import { Legals } from './Legals.js';
-const WHITE_PION_DIRS = [{ dx: -1, dy: -1 }, { dx: 1, dy: -1 }];
-const BLACK_PION_DIRS = [{ dx: -1, dy: 1 }, { dx: 1, dy: 1 }];
-const DAME_DIRS = [
+
+const freezeDirs = (dirs) => Object.freeze(dirs.map((dir) => Object.freeze(dir)));
+
+const WHITE_PION_DIRS = freezeDirs([{ dx: -1, dy: -1 }, { dx: 1, dy: -1 }]);
+const BLACK_PION_DIRS = freezeDirs([{ dx: -1, dy: 1 }, { dx: 1, dy: 1 }]);
+const DAME_DIRS = freezeDirs([
     { dx: -1, dy: -1 }, { dx: 1, dy: -1 },
     { dx: -1, dy: 1 }, { dx: 1, dy: 1 },
-];
+]);
+
 function getDirs(color, isDame) {
-    if (isDame)
-        return DAME_DIRS;
-    return color === PieceColor.BLACK ? BLACK_PION_DIRS : WHITE_PION_DIRS;
+    return isDame
+        ? DAME_DIRS
+        : color === PieceColor.BLACK ? BLACK_PION_DIRS : WHITE_PION_DIRS;
 }
+
 // ─── Explorer ───
 export class Explorer {
     #board;
@@ -30,6 +35,7 @@ export class Explorer {
         const captures = this.#findAllCaptureSequences(from, color, isDame);
         if (captures.length > 0)
             return new Legals(captures);
+
         // 2. Regular moves
         const dirs = getDirs(color, isDame);
         const positions = this.#findRegularMoves(from, color, isDame, dirs);
@@ -44,7 +50,11 @@ export class Explorer {
         for (const seq of results) {
             const captures = seq.filter((_, i) => i % 2 === 0);
             const landing = seq.at(-1);
-            const key = captures.map(c => c.hash()).sort((a, b) => a - b).join(',') + '|' + landing.hash();
+            const capturedKey = captures
+                .map((captured) => captured.hash())
+                .toSorted((a, b) => a - b)
+                .join(',');
+            const key = `${capturedKey}|${landing.hash()}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 deduped.push(seq);
@@ -75,7 +85,7 @@ export class Explorer {
         return results;
     }
     #flatten(path, last) {
-        return [...path.flatMap(s => [s[0], s[1]]), last[0], last[1]];
+        return [...path.flatMap(([captured, landing]) => [captured, landing]), ...last];
     }
     #applyCapture(board, from, captured, landing) {
         return board.removePiece(captured).movePiece(from, landing);
@@ -90,9 +100,10 @@ export class Explorer {
     #findCapturesInDir(board, from, dir, isDame) {
         const myColor = board.isBlackPiece(from) ? PieceColor.BLACK : PieceColor.WHITE;
         const results = [];
+        const { dx, dy } = dir;
         if (isDame) {
-            let x = from.x + dir.dx;
-            let y = from.y + dir.dy;
+            let x = from.x + dx;
+            let y = from.y + dy;
             let foundOpponent = null;
             while (Position.isValid(x, y)) {
                 const pos = Position.fromCoords(x, y);
@@ -110,16 +121,16 @@ export class Explorer {
                     results.push([foundOpponent, pos]);
                     break;
                 }
-                x += dir.dx;
-                y += dir.dy;
+                x += dx;
+                y += dy;
             }
             return results;
         }
         // Pion: single square capture
-        const midX = from.x + dir.dx;
-        const midY = from.y + dir.dy;
-        const landX = from.x + 2 * dir.dx;
-        const landY = from.y + 2 * dir.dy;
+        const midX = from.x + dx;
+        const midY = from.y + dy;
+        const landX = from.x + 2 * dx;
+        const landY = from.y + 2 * dy;
         if (!Position.isValid(midX, midY) || !Position.isValid(landX, landY))
             return [];
         const midPos = Position.fromCoords(midX, midY);
@@ -135,23 +146,23 @@ export class Explorer {
     #findRegularMoves(from, color, isDame, dirs) {
         const positions = [];
         if (isDame) {
-            for (const d of dirs) {
-                let x = from.x + d.dx;
-                let y = from.y + d.dy;
+            for (const { dx, dy } of dirs) {
+                let x = from.x + dx;
+                let y = from.y + dy;
                 while (Position.isValid(x, y)) {
                     const pos = Position.fromCoords(x, y);
                     if (this.#board.isOccupied(pos))
                         break;
                     positions.push(pos);
-                    x += d.dx;
-                    y += d.dy;
+                    x += dx;
+                    y += dy;
                 }
             }
         }
         else {
-            for (const d of dirs) {
-                const nx = from.x + d.dx;
-                const ny = from.y + d.dy;
+            for (const { dx, dy } of dirs) {
+                const nx = from.x + dx;
+                const ny = from.y + dy;
                 if (Position.isValid(nx, ny)) {
                     const pos = Position.fromCoords(nx, ny);
                     if (!this.#board.isOccupied(pos))
