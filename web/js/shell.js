@@ -1,5 +1,6 @@
 import { parseInput } from '../../app/parse.js';
 import { formatMove, formatTrace, renderGame } from '../../app/render.js';
+import { trace } from './debug.js';
 
 const HELP = `Commands:
 	<number>          apply the move with that menu number
@@ -45,6 +46,21 @@ export function initShell(state, syncBoard) {
 
   function moveAt(index) {
     return engine().getGame().getMoves()[index];
+  }
+
+  // --- Legality queries the board UI relies on (single source of truth) ---
+  function movableSquares() {
+    const froms = new Set(engine().getGame().getMoves().map((move) => move.from.toString()));
+    trace('shell', 'movableSquares', [...froms]);
+    return froms;
+  }
+
+  function targetsFrom(notation) {
+    const targets = engine().getGame().getMoves()
+      .filter((move) => move.from.toString() === notation)
+      .map((move) => move.to.toString());
+    trace('shell', 'targetsFrom', notation, targets);
+    return targets;
   }
 
   function appendBlock(text = '') {
@@ -163,19 +179,26 @@ export function initShell(state, syncBoard) {
   }
 
   async function submitCommand(raw) {
-    if (pending) return;
+    if (pending) {
+      trace('shell', 'submit ignored (busy)', raw);
+      return;
+    }
 
     pending = true;
     setControlsDisabled(true);
+    const picking = engine().isPickingMove();
+    trace('shell', 'submit', { raw, picking });
 
     try {
       appendPrompt(raw);
       const currentEngine = engine();
-      const result = currentEngine.isPickingMove()
+      const result = picking
         ? currentEngine.resolvePick(raw)
         : await currentEngine.handle(parseInput(raw));
+      trace('shell', 'result', result.kind, result);
       renderResult(result);
     } catch (error) {
+      trace('shell', 'unexpected error', error);
       appendBlock(`Unexpected error: ${error.message}`);
       setStatus('Unexpected error.', true);
     } finally {
@@ -208,5 +231,5 @@ export function initShell(state, syncBoard) {
   syncPrompt();
   input.focus();
 
-  return { submitCommand };
+  return { submitCommand, movableSquares, targetsFrom };
 }

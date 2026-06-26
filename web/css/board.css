@@ -71,6 +71,10 @@
   background: #05070d;
 }
 
+.cell.movable {
+  cursor: pointer;
+}
+
 .cell.hint::after {
   content: '';
   position: absolute;
