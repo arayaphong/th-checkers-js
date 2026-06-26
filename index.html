@@ -8,21 +8,429 @@
   <style>
     :root {
       color-scheme: dark;
+      --bg: #14120f;
+      --panel: #211d18;
+      --panel-border: #3b3227;
+      --text: #f1e7d6;
+      --muted: #c0ae90;
+      --accent: #e0a84f;
+      --accent-strong: #f8c36f;
+      --danger: #ff8a80;
+      font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', monospace;
     }
 
     body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(224, 168, 79, 0.16), transparent 28%),
+        linear-gradient(180deg, #17130f 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    main {
+      width: min(960px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    h1,
+    p {
+      margin: 0;
+    }
+
+    .hero {
+      margin-bottom: 20px;
       text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .shell {
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(23, 19, 15, 0.88);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    .shell-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .shell-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .shell-dots span {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: var(--muted);
+      opacity: 0.45;
+    }
+
+    .shell-title {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .shell-body {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .output {
+      min-height: 420px;
+      max-height: 62vh;
+      overflow: auto;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(224, 168, 79, 0.14);
+      background: linear-gradient(180deg, rgba(42, 36, 29, 0.85), rgba(20, 18, 15, 0.95));
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .prompt-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .prompt-label {
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .command-input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .command-input:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .command-button,
+    .shortcut-button {
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 11px 16px;
+      background: rgba(224, 168, 79, 0.12);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+      transition: background-color 120ms ease, transform 120ms ease;
+    }
+
+    .command-button:hover,
+    .shortcut-button:hover {
+      background: rgba(224, 168, 79, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .shortcuts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .shortcut-button {
+      border-color: var(--panel-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      padding: 9px 12px;
+    }
+
+    .shortcut-button.active {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(224, 168, 79, 0.14);
+    }
+
+    .status-line {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .status-line.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 640px) {
+      .prompt-row {
+        grid-template-columns: 1fr;
+      }
+
+      .command-button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>หมากฮอสไทย สวัสดี!</h1>
+  <main>
+    <section class="hero">
+      <h1>Thai Checkers</h1>
+      <p>REPL simulator for the same commands you use with <strong>npm run demo</strong> or <strong>node app/main.js</strong>.</p>
+    </section>
+
+    <section class="shell" aria-label="Thai Checkers REPL simulator">
+      <div class="shell-bar">
+        <div class="shell-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="shell-title">thai-checkers repl</div>
+      </div>
+
+      <div class="shell-body">
+        <div id="output" class="output" aria-live="polite"></div>
+
+        <form id="command-form" class="prompt-row">
+          <label for="command-input" id="prompt-label" class="prompt-label">&gt;</label>
+          <input id="command-input" class="command-input" name="command" type="text" autocomplete="off"
+            spellcheck="false" placeholder="Type a command like demo1, trace 1, d5 d1, undo" />
+          <button class="command-button" type="submit">Run</button>
+        </form>
+
+        <div class="shortcuts" aria-label="Quick commands">
+          <button class="shortcut-button" type="button" data-command="help">help</button>
+          <button class="shortcut-button" type="button" data-command="moves">moves</button>
+          <button class="shortcut-button" type="button" data-command="new">new</button>
+          <button class="shortcut-button" type="button" data-command="undo">undo</button>
+          <button class="shortcut-button" type="button" data-command="redo">redo</button>
+          <button class="shortcut-button" type="button" data-command="demo1">demo1</button>
+          <button class="shortcut-button" type="button" data-command="demo2">demo2</button>
+          <button class="shortcut-button" type="button" data-command="demo3">demo3</button>
+          <button class="shortcut-button" type="button" data-command="demo4">demo4</button>
+        </div>
+
+        <div id="status-line" class="status-line">Ready.</div>
+      </div>
+    </section>
+  </main>
 
   <script type="module">
     import { Engine } from './app/Engine.js';
+    import { parseInput } from './app/parse.js';
+    import { formatMove, formatTrace, renderGame } from './app/render.js';
 
     window.Engine = Engine;
+
+    const HELP = `Commands:
+  <number>          apply the move with that menu number
+  <from> <to>       apply a move by coordinates, e.g. "b3 c4" or "b3-c4"
+  trace <n>         show the full path of move #n
+  trace <f> <t>     show all paths from f to t
+  undo  | u         take back the last move
+  redo  | r         re-apply a move undone with 'undo'
+  new   | reset | n start a fresh game
+  moves | m         re-print the board and move menu
+  help  | h | ?     show this help
+  quit  | q | exit  clear the session and start a fresh board
+
+Demos:
+  demo1             branching chain capture, same final landing
+  demo2             dame loop capture ending on the original square
+  demo3             dame loop capture with two mirror-image paths
+  demo4             dame loop capture with extra central branching`;
+
+    const output = document.querySelector('#output');
+    const statusLine = document.querySelector('#status-line');
+    const form = document.querySelector('#command-form');
+    const input = document.querySelector('#command-input');
+    const promptLabel = document.querySelector('#prompt-label');
+    const shortcutButtons = Array.from(document.querySelectorAll('.shortcut-button'));
+
+    let engine = new Engine();
+    let pending = false;
+
+    function moveAt(index) {
+      return engine.getGame().getMoves()[index];
+    }
+
+    function appendBlock(text = '') {
+      output.textContent += `${text}\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function appendPrompt(raw) {
+      appendBlock(`${engine.isPickingMove() ? 'Pick a number:' : '>'} ${raw}`);
+    }
+
+    function setStatus(text, isError = false) {
+      statusLine.textContent = text;
+      statusLine.classList.toggle('error', isError);
+    }
+
+    function syncPrompt() {
+      promptLabel.textContent = engine.isPickingMove() ? 'Pick a number:' : '>';
+      shortcutButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.command?.startsWith('demo') && false);
+      });
+    }
+
+    function renderResult(result) {
+      switch (result.kind) {
+        case 'state':
+          appendBlock(renderGame(engine.getGame()));
+          setStatus(`Action: ${result.action}. ${result.state.legalMoveCount} legal move(s).`);
+          break;
+        case 'demo':
+          appendBlock(result.description);
+          appendBlock(renderGame(engine.getGame()));
+          setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
+          shortcutButtons.forEach((button) => {
+            button.classList.toggle('active', button.dataset.command === result.id);
+          });
+          break;
+        case 'help':
+          appendBlock(HELP);
+          setStatus('Help shown.');
+          break;
+        case 'invalid-index':
+          appendBlock(`No move #${result.value}. There are ${result.legalMoveCount} legal move(s).`);
+          setStatus('Invalid move number.', true);
+          break;
+        case 'no-coordinate-match':
+          appendBlock(`No legal move from ${result.from.notation} to ${result.to.notation}.`);
+          setStatus('No matching move for those coordinates.', true);
+          break;
+        case 'pick-required':
+          appendBlock(`Multiple moves match ${result.from.notation} -> ${result.to.notation}:`);
+          result.choices.forEach((choice, index) => {
+            appendBlock(`  ${index + 1}) ${formatMove(moveAt(choice.index))}`);
+          });
+          setStatus('Multiple matching moves. Pick a number to continue.');
+          break;
+        case 'trace':
+          appendBlock(formatTrace(moveAt(result.move.index)));
+          setStatus(`Trace for move #${result.move.number}.`);
+          break;
+        case 'trace-list':
+          appendBlock(`Trace(s) for ${result.from.notation} -> ${result.to.notation}:`);
+          result.moves.forEach((move, index) => {
+            appendBlock(`  ${index + 1}) ${formatTrace(moveAt(move.index))}`);
+          });
+          setStatus(`Found ${result.moves.length} trace(s).`);
+          break;
+        case 'empty-history':
+          appendBlock(result.action === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.');
+          setStatus(`Nothing to ${result.action}.`, true);
+          break;
+        case 'cancelled':
+          appendBlock('Cancelled.');
+          setStatus('Selection cancelled.', true);
+          break;
+        case 'parse-error':
+          appendBlock(result.message);
+          setStatus('Input could not be parsed.', true);
+          break;
+        case 'invalid-demo':
+          appendBlock(`Unknown demo: "${result.id}". Available: ${result.available.join(', ')}`);
+          setStatus('Unknown demo id.', true);
+          break;
+        case 'error':
+          if (result.action === 'redo') {
+            appendBlock(`Could not redo: ${result.error.message}`);
+            setStatus('Redo failed.', true);
+          } else if (result.action === 'demo') {
+            appendBlock(`Could not load demo: ${result.error.message}`);
+            setStatus('Demo loading failed.', true);
+          } else {
+            appendBlock(`Could not apply move: ${result.error.message}`);
+            setStatus('Move failed.', true);
+          }
+          break;
+        case 'quit':
+          engine = new Engine();
+          appendBlock('Bye.');
+          appendBlock(renderGame(engine.getGame()));
+          setStatus('Session reset to a fresh board.');
+          break;
+        case 'noop':
+          setStatus('No operation.');
+          break;
+      }
+      syncPrompt();
+    }
+
+    async function submitCommand(raw) {
+      if (pending) return;
+
+      pending = true;
+      input.disabled = true;
+      form.querySelector('button[type="submit"]').disabled = true;
+      shortcutButtons.forEach((button) => { button.disabled = true; });
+
+      try {
+        appendPrompt(raw);
+        const result = engine.isPickingMove()
+          ? engine.resolvePick(raw)
+          : await engine.handle(parseInput(raw));
+        renderResult(result);
+      } catch (error) {
+        appendBlock(`Unexpected error: ${error.message}`);
+        setStatus('Unexpected error.', true);
+      } finally {
+        pending = false;
+        input.disabled = false;
+        form.querySelector('button[type="submit"]').disabled = false;
+        shortcutButtons.forEach((button) => { button.disabled = false; });
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitCommand(input.value);
+    });
+
+    shortcutButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        input.value = button.dataset.command ?? '';
+        submitCommand(input.value);
+      });
+    });
+
+    appendBlock(renderGame(engine.getGame()));
+    appendBlock(HELP);
+    syncPrompt();
+    input.focus();
   </script>
 </body>
 
