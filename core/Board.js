@@ -182,19 +182,23 @@ export class Board {
     // ─── Transformations ───
     promotePiece(pos) {
         const mask = bit(pos.hash());
-        if ((this.#occBits & mask) === 0)
-            return this;
-        if ((this.#dameBits & mask) !== 0)
-            return this;
+        if ((this.#occBits & mask) === 0) {
+            throw new Error(`Cannot promote empty square: ${pos.toString()}`);
+        }
+        if ((this.#dameBits & mask) !== 0) {
+            throw new Error(`Cannot promote dame piece: ${pos.toString()}`);
+        }
         return new Board(this.#occBits, this.#blackBits, setBit(this.#dameBits, mask));
     }
     movePiece(from, to) {
         const fm = bit(from.hash());
         const tm = bit(to.hash());
-        if ((this.#occBits & fm) === 0)
-            return this;
-        if ((this.#occBits & tm) !== 0)
-            return this;
+        if ((this.#occBits & fm) === 0) {
+            throw new Error(`Cannot move from empty square: ${from.toString()}`);
+        }
+        if ((this.#occBits & tm) !== 0) {
+            throw new Error(`Cannot move to occupied square: ${to.toString()}`);
+        }
         const wasBlack = (this.#blackBits & fm) !== 0;
         const wasDame = (this.#dameBits & fm) !== 0;
         const occBits = setBit(clearBit(this.#occBits, fm), tm);
@@ -208,8 +212,9 @@ export class Board {
     }
     removePiece(pos) {
         const mask = bit(pos.hash());
-        if ((this.#occBits & mask) === 0)
-            return this;
+        if ((this.#occBits & mask) === 0) {
+            throw new Error(`Cannot remove from empty square: ${pos.toString()}`);
+        }
         return new Board(
             clearBit(this.#occBits, mask),
             clearBit(this.#blackBits, mask),

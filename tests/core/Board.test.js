@@ -92,6 +92,47 @@ describe('Board - immutability', () => {
   });
 });
 
+describe('Board - transformation invariants', () => {
+  test('movePiece rejects moves from empty squares', () => {
+    const from = Position.fromString('B1');
+    const to = Position.fromString('A2');
+    const board = Board.empty();
+
+    expect(() => board.movePiece(from, to)).toThrow(/Cannot move from empty square: B1/);
+  });
+
+  test('movePiece rejects moves to occupied squares', () => {
+    const from = Position.fromString('B1');
+    const to = Position.fromString('A2');
+    const board = Board.fromPieces(new Map([
+      [from, { color: PieceColor.BLACK, type: PieceType.PION }],
+      [to, { color: PieceColor.WHITE, type: PieceType.PION }],
+    ]));
+
+    expect(() => board.movePiece(from, to)).toThrow(/Cannot move to occupied square: A2/);
+  });
+
+  test('promotePiece rejects empty squares and existing dames', () => {
+    const pion = Position.fromString('B1');
+    const dame = Position.fromString('A2');
+    const empty = Position.fromString('D1');
+    const board = Board.fromPieces(new Map([
+      [pion, { color: PieceColor.BLACK, type: PieceType.PION }],
+      [dame, { color: PieceColor.WHITE, type: PieceType.DAME }],
+    ]));
+
+    expect(() => board.promotePiece(empty)).toThrow(/Cannot promote empty square: D1/);
+    expect(() => board.promotePiece(dame)).toThrow(/Cannot promote dame piece: A2/);
+  });
+
+  test('removePiece rejects empty squares', () => {
+    const pos = Position.fromString('B1');
+    const board = Board.empty();
+
+    expect(() => board.removePiece(pos)).toThrow(/Cannot remove from empty square: B1/);
+  });
+});
+
 describe('Board - piece count invariant', () => {
   test('fromPieces accepts valid 16-piece Thai checkers boards', () => {
     const board = Board.fromPieces(piecesFromFirstPositions(16));
