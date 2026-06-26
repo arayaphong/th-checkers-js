@@ -26,12 +26,21 @@ export function initShell(state, syncBoard) {
   const input = document.querySelector('#command-input');
   const promptLabel = document.querySelector('#prompt-label');
   const clearButton = document.querySelector('#clear-button');
-  const shortcutButtons = Array.from(document.querySelectorAll('.shortcut-button'));
+  const submitButton = form.querySelector('button[type="submit"]');
+  const shortcutButtons = [...document.querySelectorAll('.shortcut-button')];
 
   let pending = false;
 
   function engine() {
     return state.engine;
+  }
+
+  function setControlsDisabled(disabled) {
+    input.disabled = disabled;
+    submitButton.disabled = disabled;
+    for (const button of shortcutButtons) {
+      button.disabled = disabled;
+    }
   }
 
   function moveAt(index) {
@@ -60,9 +69,9 @@ export function initShell(state, syncBoard) {
 
   function syncPrompt() {
     promptLabel.textContent = engine().isPickingMove() ? 'Pick a number:' : '>';
-    shortcutButtons.forEach((button) => {
+    for (const button of shortcutButtons) {
       button.classList.toggle('active', button.dataset.command?.startsWith('demo') && false);
-    });
+    }
   }
 
   function renderResult(result) {
@@ -77,9 +86,9 @@ export function initShell(state, syncBoard) {
         appendBlock(result.description);
         appendBlock(renderGame(engine().getGame()));
         setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
-        shortcutButtons.forEach((button) => {
+        for (const button of shortcutButtons) {
           button.classList.toggle('active', button.dataset.command === result.id);
-        });
+        }
         break;
       case 'help':
         appendBlock(HELP);
@@ -95,9 +104,9 @@ export function initShell(state, syncBoard) {
         break;
       case 'pick-required':
         appendBlock(`Multiple moves match ${result.from.notation} -> ${result.to.notation}:`);
-        result.choices.forEach((choice, index) => {
+        for (const [index, choice] of result.choices.entries()) {
           appendBlock(`  ${index + 1}) ${formatMove(moveAt(choice.index))}`);
-        });
+        }
         setStatus('Multiple matching moves. Pick a number to continue.');
         break;
       case 'trace':
@@ -106,9 +115,9 @@ export function initShell(state, syncBoard) {
         break;
       case 'trace-list':
         appendBlock(`Trace(s) for ${result.from.notation} -> ${result.to.notation}:`);
-        result.moves.forEach((move, index) => {
+        for (const [index, move] of result.moves.entries()) {
           appendBlock(`  ${index + 1}) ${formatTrace(moveAt(move.index))}`);
-        });
+        }
         setStatus(`Found ${result.moves.length} trace(s).`);
         break;
       case 'empty-history':
@@ -157,11 +166,7 @@ export function initShell(state, syncBoard) {
     if (pending) return;
 
     pending = true;
-    input.disabled = true;
-    form.querySelector('button[type="submit"]').disabled = true;
-    shortcutButtons.forEach((button) => {
-      button.disabled = true;
-    });
+    setControlsDisabled(true);
 
     try {
       appendPrompt(raw);
@@ -175,11 +180,7 @@ export function initShell(state, syncBoard) {
       setStatus('Unexpected error.', true);
     } finally {
       pending = false;
-      input.disabled = false;
-      form.querySelector('button[type="submit"]').disabled = false;
-      shortcutButtons.forEach((button) => {
-        button.disabled = false;
-      });
+      setControlsDisabled(false);
       input.value = '';
       input.focus();
     }
@@ -194,12 +195,12 @@ export function initShell(state, syncBoard) {
     clearConsole();
   });
 
-  shortcutButtons.forEach((button) => {
+  for (const button of shortcutButtons) {
     button.addEventListener('click', () => {
       input.value = button.dataset.command ?? '';
       submitCommand(input.value);
     });
-  });
+  }
 
   appendBlock(renderGame(engine().getGame()));
   appendBlock(HELP);
