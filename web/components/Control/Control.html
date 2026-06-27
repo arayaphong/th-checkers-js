@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thai Checkers - Control</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css" />
+  <link rel="stylesheet" href="../App/App.css" />
+  <link rel="stylesheet" href="./Control.css" />
+</head>
+
+<body data-bs-theme="dark">
+  <main id="app">
+    <section class="control-card" aria-label="Quick commands panel">
+      <div class="control-title">quick commands</div>
+      <div class="shortcuts" aria-label="Quick commands">
+        <button class="shortcut-button" type="button" data-command="help">help</button>
+        <button class="shortcut-button" type="button" data-command="moves">moves</button>
+        <button class="shortcut-button" type="button" data-command="new">new</button>
+        <button class="shortcut-button" type="button" data-command="undo">undo</button>
+        <button class="shortcut-button" type="button" data-command="redo">redo</button>
+        <button class="shortcut-button" type="button" data-command="demo1">demo1</button>
+        <button class="shortcut-button" type="button" data-command="demo2">demo2</button>
+        <button class="shortcut-button" type="button" data-command="demo3">demo3</button>
+        <button class="shortcut-button" type="button" data-command="demo4">demo4</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { Control } from './Control.js';
+
+    const control = new Control(document.querySelector('#app'));
+    await control.mount();
+  </script>
+</body>
+
+</html>

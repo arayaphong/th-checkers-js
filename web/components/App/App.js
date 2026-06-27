@@ -1,5 +1,6 @@
 import { Component } from '../Component/Component.js';
 import { Board } from '../Board/Board.js';
+import { Control } from '../Control/Control.js';
 import { Shell } from '../Shell/Shell.js';
 import { EngineClient } from '../../utils/Client.js';
 
@@ -22,10 +23,14 @@ export class App extends Component {
     await this.loadTemplate(new URL('./App.html', import.meta.url), '#app');
 
     const boardRoot = this.container.querySelector('[data-board-root]');
+    const controlRoot = this.container.querySelector('[data-control-root]');
     const shellRoot = this.container.querySelector('[data-shell-root]');
 
     const board = new Board(boardRoot, { engine: this.state.engine });
     await board.mount();
+
+    const control = new Control(controlRoot, { engine: this.state.engine });
+    await control.mount();
 
     const shell = new Shell(shellRoot, { engine: this.state.engine });
     await shell.mount();

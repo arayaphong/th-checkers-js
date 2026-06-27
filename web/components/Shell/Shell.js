@@ -68,7 +68,6 @@ export class Shell extends Component {
     this.promptLabel = this.container.querySelector('#prompt-label');
     this.clearButton = this.container.querySelector('#clear-button');
     this.submitButton = this.form.querySelector('button[type="submit"]');
-    this.shortcutButtons = [...this.container.querySelectorAll('.shortcut-button')];
 
     this.form.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -78,13 +77,6 @@ export class Shell extends Component {
     this.clearButton.addEventListener('click', () => {
       this.clearConsole();
     });
-
-    for (const button of this.shortcutButtons) {
-      button.addEventListener('click', () => {
-        this.input.value = button.dataset.command ?? '';
-        this.submitCommand(this.input.value);
-      });
-    }
   }
 
   engine() {
@@ -102,9 +94,6 @@ export class Shell extends Component {
   setControlsDisabled(disabled) {
     this.input.disabled = disabled;
     this.submitButton.disabled = disabled;
-    for (const button of this.shortcutButtons) {
-      button.disabled = disabled;
-    }
   }
 
   async moveAt(index) {
@@ -134,9 +123,6 @@ export class Shell extends Component {
 
   syncPrompt(state) {
     this.promptLabel.textContent = state.pendingPick.length > 0 ? 'Pick a number:' : '>';
-    for (const button of this.shortcutButtons) {
-      button.classList.toggle('active', button.dataset.command === this.activeDemo);
-    }
   }
 
   async renderResult(result) {

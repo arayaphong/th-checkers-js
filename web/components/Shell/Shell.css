@@ -105,8 +105,7 @@
   border-color: var(--accent);
 }
 
-.command-button,
-.shortcut-button {
+.command-button {
   border: 1px solid var(--accent);
   border-radius: 12px;
   padding: 11px 16px;
@@ -123,33 +122,13 @@
   color: var(--muted);
 }
 
-.command-button:hover,
-.shortcut-button:hover {
+.command-button:hover {
   background: rgba(56, 189, 248, 0.2);
   transform: translateY(-1px);
 }
 
 .command-button-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
-}
-
-.shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.shortcut-button {
-  border-color: var(--panel-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--muted);
-  padding: 9px 12px;
-}
-
-.shortcut-button.active {
-  border-color: var(--accent);
-  color: var(--text);
-  background: rgba(56, 189, 248, 0.14);
 }
 
 .status-line {
