@@ -49,7 +49,7 @@ export class Repl {
 
   async run() {
     this.#rl.on('SIGINT', () => this.#rl.close());
-    this.#print(renderGame(this.#engine.getGame()));
+    this.#print(renderGame(this.#engine.getGame(), this.#engine.getState()));
     this.#writePrompt();
 
     try {
@@ -78,11 +78,11 @@ export class Repl {
   #renderResult(result) {
     switch (result.kind) {
       case 'state':
-        this.#print(renderGame(this.#engine.getGame()));
+        this.#print(renderGame(this.#engine.getGame(), this.#engine.getState()));
         break;
       case 'demo':
         this.#print(result.description);
-        this.#print(renderGame(this.#engine.getGame()));
+        this.#print(renderGame(this.#engine.getGame(), this.#engine.getState()));
         break;
       case 'help':
         this.#print(HELP);
