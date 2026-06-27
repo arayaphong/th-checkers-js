@@ -3,6 +3,7 @@ import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
 import { EngineClient } from '../../utils/Client.js';
 import { movableSquares, targetsFrom, pathFor } from '../../utils/Moves.js';
+import { singleRoute } from '../../../core/utils/routeUtils.js';
 
 /**
  * Board component.
@@ -67,7 +68,10 @@ export class Board extends Component {
       }
       case 'focusin':
       case 'mouseover':
-        return this.previewPathTo(notation);
+        if (cell.classList.contains('previewable')) {
+          return this.previewPathTo(notation);
+        }
+        return;
       case 'focusout':
       case 'mouseout':
         return this.endPreview();
@@ -151,7 +155,7 @@ export class Board extends Component {
 
   clearHints() {
     for (const cell of this.cellByNotation.values()) {
-      cell.classList.remove('hint');
+      cell.classList.remove('hint', 'previewable', 'ambiguous');
       cell.removeAttribute('aria-current');
       cell.setAttribute('aria-label', cell.dataset.label ?? '');
     }
@@ -165,12 +169,21 @@ export class Board extends Component {
     cell.classList.add('selected');
     cell.setAttribute('aria-pressed', 'true');
     cell.setAttribute('aria-label', `${cell.dataset.label}, selected`);
-    const targets = await targetsFrom(this.engine(), pos.toString());
+    const game = await this.engine().getGame();
+    const moves = game.getMoves();
+    const targets = moves
+      .filter((move) => move.from.toString() === pos.toString())
+      .map((move) => move.to.toString());
     for (const target of targets) {
       const targetCell = this.cellByNotation.get(target);
-      targetCell?.classList.add('hint');
-      targetCell?.setAttribute('aria-current', 'true');
-      targetCell?.setAttribute('aria-label', `${targetCell.dataset.label}, legal target`);
+      if (!targetCell) continue;
+      const isPreviewable = singleRoute(moves, pos.toString(), target) !== null;
+      targetCell.classList.add('hint', isPreviewable ? 'previewable' : 'ambiguous');
+      targetCell.setAttribute('aria-current', 'true');
+      targetCell.setAttribute(
+        'aria-label',
+        `${targetCell.dataset.label}, legal target${isPreviewable ? ', previewable' : ', ambiguous'}`,
+      );
     }
     trace('board', 'select', pos.toString(), { targets });
   }
