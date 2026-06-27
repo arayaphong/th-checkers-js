@@ -106,14 +106,14 @@ export function initShell(state, board) {
       case 'state':
         if (result.action !== 'moves') activeDemo = null;
         board.sync();
-        appendBlock(renderGame(engine().getGame()));
+        appendBlock(renderGame(engine().getGame(), result.state));
         setStatus(`Action: ${result.action}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'demo':
         activeDemo = result.id;
         board.sync();
         appendBlock(result.description);
-        appendBlock(renderGame(engine().getGame()));
+        appendBlock(renderGame(engine().getGame(), result.state));
         setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'help':
@@ -138,7 +138,7 @@ export function initShell(state, board) {
       case 'trace':
         appendBlock(formatTrace(moveAt(result.move.index)));
         board.highlightPath(result.move.path.map((cell) => cell.notation));
-        setStatus(`Trace for move #${result.move.number}.`);
+        setStatus(`Trace for move #${result.move.number}${result.move.groupId ? ` (group ${result.move.groupId})` : ''}.`);
         break;
       case 'trace-list':
         appendBlock(`Trace(s) for ${result.from.notation} -> ${result.to.notation}:`);
