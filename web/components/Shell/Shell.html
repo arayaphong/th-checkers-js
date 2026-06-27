@@ -1,0 +1,36 @@
+<details class="shell" aria-label="Thai Checkers REPL simulator">
+  <summary class="shell-bar">
+    <div class="shell-dots" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="shell-title">thai-checkers repl</div>
+  </summary>
+
+  <div class="shell-body">
+    <div id="output" class="output" aria-live="polite"></div>
+
+    <form id="command-form" class="prompt-row">
+      <label for="command-input" id="prompt-label" class="prompt-label">&gt;</label>
+      <input id="command-input" class="command-input" name="command" type="text" autocomplete="off"
+        spellcheck="false" placeholder="Type a command like demo1, trace 1, d5 d1, undo" />
+      <button class="command-button" type="submit">Run</button>
+      <button class="command-button command-button-secondary" type="button" id="clear-button">Clear</button>
+    </form>
+
+    <div class="shortcuts" aria-label="Quick commands">
+      <button class="shortcut-button" type="button" data-command="help">help</button>
+      <button class="shortcut-button" type="button" data-command="moves">moves</button>
+      <button class="shortcut-button" type="button" data-command="new">new</button>
+      <button class="shortcut-button" type="button" data-command="undo">undo</button>
+      <button class="shortcut-button" type="button" data-command="redo">redo</button>
+      <button class="shortcut-button" type="button" data-command="demo1">demo1</button>
+      <button class="shortcut-button" type="button" data-command="demo2">demo2</button>
+      <button class="shortcut-button" type="button" data-command="demo3">demo3</button>
+      <button class="shortcut-button" type="button" data-command="demo4">demo4</button>
+    </div>
+
+    <div id="status-line" class="status-line">Ready.</div>
+  </div>
+</details>
