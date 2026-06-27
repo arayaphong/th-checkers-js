@@ -111,6 +111,43 @@
   border: 2px dashed rgba(250, 204, 21, 0.6);
 }
 
+.board-context-menu {
+  position: fixed;
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  padding: 4px 0;
+  width: max-content;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.board-context-menu[hidden] {
+  display: none;
+}
+
+.board-context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #f3f4f6;
+  font-size: 0.875rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.board-context-menu-item:hover,
+.board-context-menu-item:focus {
+  background: #374151;
+  outline: none;
+}
+
 .cell.piece::before {
   content: '';
   position: absolute;

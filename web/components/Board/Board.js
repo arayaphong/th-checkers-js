@@ -3,7 +3,7 @@ import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
 import { EngineClient } from '../../utils/Client.js';
 import { movableSquares, targetsFrom, pathFor } from '../../utils/Moves.js';
-import { singleRoute } from '../../../core/utils/routeUtils.js';
+import { singleRoute, expandRoute } from '../../../core/utils/routeUtils.js';
 
 /**
  * Board component.
@@ -17,18 +17,33 @@ import { singleRoute } from '../../../core/utils/routeUtils.js';
  * the engine reports a new state.
  */
 export class Board extends Component {
+  /** @type {HTMLElement|null} */
+  boardElement = null;
+  /** @type {Map<string, HTMLButtonElement>} */
+  cellByNotation = new Map();
+  /** @type {Set<string>} */
+  movable = new Set();
+  /** @type {import('../../../core/Position.js').Position|null} */
+  selected = null;
+  /** @type {HTMLButtonElement|null} */
+  selectedCell = null;
+  /** @type {string[]} */
+  stickyPath = [];
+  /** @type {Map<string, { index: number, move: import('../../../core/Game.js').Move }[]>} */
+  ambiguousChoices = new Map();
+  /** @type {HTMLElement|null} */
+  contextMenu = null;
+  /** @type {(e: MouseEvent) => void} */
+  #hideMenuOnClickOutside;
+  /** @type {(e: KeyboardEvent) => void} */
+  #hideMenuOnEscape;
+
   constructor(container, options = {}) {
     super(container);
     this.state = { engine: options.engine ?? this.#createEngine() };
 
-    this.boardElement = null;
-    this.cellByNotation = new Map();
-    this.movable = new Set();
-    this.selected = null;
-    this.selectedCell = null;
-    // Squares highlighted by a `trace` command; kept so a transient hover preview
-    // can restore them when the pointer leaves.
-    this.stickyPath = [];
+    this.#hideMenuOnClickOutside = (e) => this.#onDocumentClick(e);
+    this.#hideMenuOnEscape = (e) => this.#onDocumentKeydown(e);
 
     this.unsubscribe = this.state.engine.subscribe?.((message) => this.#onEngineResult(message));
   }
@@ -39,6 +54,9 @@ export class Board extends Component {
   }
 
   destroy() {
+    this.#hideContextMenu();
+    document.removeEventListener('click', this.#hideMenuOnClickOutside);
+    document.removeEventListener('keydown', this.#hideMenuOnEscape);
     this.unsubscribe?.();
     if (this.state.engine instanceof EngineClient) {
       this.state.engine.terminate();
@@ -103,6 +121,9 @@ export class Board extends Component {
     this.boardElement = this.container.querySelector('.board');
     this.boardElement.setAttribute('role', 'group');
     this.#addEventListeners();
+    this.contextMenu = this.#createContextMenu();
+    document.addEventListener('click', this.#hideMenuOnClickOutside);
+    document.addEventListener('keydown', this.#hideMenuOnEscape);
     await this.sync();
   }
 
@@ -161,11 +182,75 @@ export class Board extends Component {
     }
   }
 
+  #createContextMenu() {
+    const menu = document.createElement('div');
+    menu.className = 'board-context-menu';
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('hidden', '');
+    this.container.append(menu);
+    return menu;
+  }
+
+  #hideContextMenu() {
+    if (!this.contextMenu || this.contextMenu.hasAttribute('hidden')) return;
+    this.contextMenu.setAttribute('hidden', '');
+    this.endPreview();
+  }
+
+  #showContextMenu(notation, cell) {
+    const choices = this.ambiguousChoices.get(notation);
+    if (!choices || choices.length < 2) return;
+
+    this.contextMenu.replaceChildren();
+    for (const [itemIndex, { index, move }] of choices.entries()) {
+      const pathNotations = expandRoute(move.path).map((pos) => pos.toString());
+      const pathText = pathNotations.join(' → ');
+      const captureCount = move.captured.length;
+      const label = `${itemIndex + 1}) Route (x${captureCount})`;
+      const item = document.createElement('button');
+      item.className = 'board-context-menu-item';
+      item.type = 'button';
+      item.setAttribute('role', 'menuitem');
+      item.title = `${itemIndex + 1}) ${pathText}`;
+      item.textContent = label;
+      item.addEventListener('mouseenter', () => this.paintPath(pathNotations));
+      item.addEventListener('mouseleave', () => this.endPreview());
+      item.addEventListener('click', () => this.#applyChoice(index));
+      this.contextMenu.append(item);
+    }
+
+    const rect = cell.getBoundingClientRect();
+    this.contextMenu.style.left = `${rect.left}px`;
+    this.contextMenu.style.top = `${rect.bottom + 4}px`;
+    this.contextMenu.removeAttribute('hidden');
+  }
+
+  async #applyChoice(index) {
+    this.#hideContextMenu();
+    this.clearSelection();
+    const raw = String(index + 1);
+    trace('board', 'submit ambiguous move', raw);
+    await this.engine().command(raw);
+  }
+
+  #onDocumentClick(event) {
+    if (!this.contextMenu || this.contextMenu.hasAttribute('hidden')) return;
+    if (this.contextMenu.contains(event.target)) return;
+    this.#hideContextMenu();
+  }
+
+  #onDocumentKeydown(event) {
+    if (event.key === 'Escape') {
+      this.#hideContextMenu();
+    }
+  }
+
   async select(pos, cell) {
     // Starting a new move intent retires any pinned trace highlight.
     this.clearPath();
     this.selected = pos;
     this.selectedCell = cell;
+    this.ambiguousChoices.clear();
     cell.classList.add('selected');
     cell.setAttribute('aria-pressed', 'true');
     cell.setAttribute('aria-label', `${cell.dataset.label}, selected`);
@@ -184,15 +269,26 @@ export class Board extends Component {
         'aria-label',
         `${targetCell.dataset.label}, legal target${isPreviewable ? ', previewable' : ', ambiguous'}`,
       );
+      if (!isPreviewable) {
+        const choices = [];
+        moves.forEach((move, index) => {
+          if (move.from.toString() === pos.toString() && move.to.toString() === target) {
+            choices.push({ index, move });
+          }
+        });
+        this.ambiguousChoices.set(target, choices);
+      }
     }
     trace('board', 'select', pos.toString(), { targets });
   }
 
   clearSelection() {
+    this.#hideContextMenu();
     this.selectedCell?.classList.remove('selected');
     this.selectedCell?.removeAttribute('aria-pressed');
     this.selectedCell?.setAttribute('aria-label', this.selectedCell.dataset.label ?? '');
     this.clearHints();
+    this.ambiguousChoices.clear();
     this.selected = null;
     this.selectedCell = null;
   }
@@ -235,6 +331,14 @@ export class Board extends Component {
       return;
     }
 
+    // Ambiguous destinations open a context menu so the user can pick the exact
+    // route; unambiguous destinations are submitted as a normal coordinate move.
+    if (cell.classList.contains('ambiguous')) {
+      event.stopPropagation();
+      this.#showContextMenu(notation, cell);
+      return;
+    }
+
     // Otherwise treat it as the destination and hand it to the engine as a raw
     // command. The worker will broadcast the result to all clients.
     const command = `${this.selected.toString()} ${notation}`;
@@ -244,9 +348,11 @@ export class Board extends Component {
   }
 
   async sync() {
+    this.#hideContextMenu();
     this.selected = null;
     this.selectedCell = null;
     this.stickyPath = [];
+    this.ambiguousChoices.clear();
     this.cellByNotation.clear();
     this.movable = await movableSquares(this.engine());
     trace('board', 'render', { movable: [...this.movable] });
