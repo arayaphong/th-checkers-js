@@ -13,15 +13,12 @@
 
 <body data-bs-theme="dark">
   <main id="app"></main>
-  <pre id="debug-log" style="position:fixed;bottom:0;left:0;right:0;background:#111;color:#0f0;padding:10px;max-height:200px;overflow:auto;z-index:9999;font-size:12px"></pre>
-
   <script type="module">
-    const log = document.getElementById('debug-log');
-    function write(msg) {
-      log.textContent += msg + '\n';
+    function write(scope, ...args) {
+      console.debug(`[trace:${scope}]`, ...args);
     }
-    window.addEventListener('error', (e) => write('ERROR: ' + e.message));
-    window.addEventListener('unhandledrejection', (e) => write('REJECTION: ' + e.reason));
+    window.addEventListener('error', (e) => write('error', e.message));
+    window.addEventListener('unhandledrejection', (e) => write('error', e.reason));
 
     // Patch EngineClient to log sends
     const orig = await import('./web/utils/EngineClient.js');
@@ -33,11 +30,11 @@
     globalThis.Worker = class extends origWorker {
       constructor(url, options) {
         super(url, options);
-        write('WORKER created: ' + url);
-        this.addEventListener('message', (e) => write('WORKER -> main: ' + JSON.stringify(e.data).slice(0, 200)));
+        write('worker', 'created', url);
+        this.addEventListener('message', (e) => write('worker', 'recv', e.data));
         const originalPostMessage = this.postMessage.bind(this);
         this.postMessage = (msg) => {
-          write('main -> WORKER: ' + JSON.stringify(msg).slice(0, 200));
+          write('worker', 'send', msg);
           return originalPostMessage(msg);
         };
       }
@@ -45,9 +42,9 @@
 
     try {
       await import('./web/index.js');
-      write('web/index.js loaded');
+      write('worker', 'web/index.js loaded');
     } catch (e) {
-      write('IMPORT FAILED: ' + e.message);
+      write('error', 'IMPORT FAILED', e.message);
     }
   </script>
 </body>
