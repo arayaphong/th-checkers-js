@@ -188,18 +188,27 @@ export class Shell extends Component {
         this.appendBlock(`Unknown demo: "${result.id}". Available: ${result.available.join(', ')}`);
         this.setStatus('Unknown demo id.', true);
         break;
-      case 'error':
-        if (result.action === 'redo') {
-          this.appendBlock(`Could not redo: ${result.error.message}`);
-          this.setStatus('Redo failed.', true);
-        } else if (result.action === 'demo') {
-          this.appendBlock(`Could not load demo: ${result.error.message}`);
-          this.setStatus('Demo loading failed.', true);
-        } else {
-          this.appendBlock(`Could not apply move: ${result.error.message}`);
-          this.setStatus('Move failed.', true);
+      case 'error': {
+        let message;
+        let status;
+        switch (result.action) {
+          case 'redo':
+            message = `Could not redo: ${result.error.message}`;
+            status = 'Redo failed.';
+            break;
+          case 'demo':
+            message = `Could not load demo: ${result.error.message}`;
+            status = 'Demo loading failed.';
+            break;
+          default:
+            message = `Could not apply move: ${result.error.message}`;
+            status = 'Move failed.';
+            break;
         }
+        this.appendBlock(message);
+        this.setStatus(status, true);
         break;
+      }
       case 'quit': {
         this.activeDemo = null;
         await this.engine().newGame();

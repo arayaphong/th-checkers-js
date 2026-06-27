@@ -189,7 +189,7 @@ export class Board extends Component {
   }
 
   async handleCellInteraction(event, pos, cell) {
-    if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+    if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) {
       return;
     }
     if (event.type === 'keydown') {
