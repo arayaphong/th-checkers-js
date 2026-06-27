@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { createDemo3Game, explainDemo3 } from '../../app/demo/index.js';
+import { createDemo3Game, explainDemo3 } from '../../cli/demos/index.js';
 
 describe('createDemo3Game', () => {
   test('produces exactly two legal moves', async () => {

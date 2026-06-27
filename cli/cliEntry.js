@@ -1,12 +1,12 @@
-// Entry point for the TUI REPL application.
+// Entry point for the TUI CLI application.
 //
 // Usage:
-//   node app/main.js            start a fresh game
-//   node app/main.js <demo-id>  start with a demo board (e.g. demo3)
+//   node cli/cliEntry.js            start a fresh game
+//   node cli/cliEntry.js <demo-id>  start with a demo board (e.g. demo3)
 
 import { Game } from '../core/Game.js';
-import { createDemoGame, DEMO_IDS } from './demo/index.js';
-import { Repl } from './Repl.js';
+import { createDemoGame, DEMO_IDS } from './demos/index.js';
+import { Cli } from './Cli.js';
 import { pathToFileURL } from 'node:url';
 
 export async function resolveGame(arg = process.argv[2]) {
@@ -22,12 +22,12 @@ export async function resolveGame(arg = process.argv[2]) {
   return createDemoGame(id);
 }
 
-export async function main(argv = process.argv, ReplClass = Repl) {
+export async function main(argv = process.argv, CliClass = Cli) {
   const game = await resolveGame(argv[2]);
   if (!game) {
     return false;
   }
-  await new ReplClass(undefined, undefined, game).run();
+  await new CliClass(undefined, undefined, game).run();
   return true;
 }
 

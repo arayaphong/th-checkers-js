@@ -5,13 +5,13 @@ import {
   movesToString,
   printBoard,
   printChoices,
-} from '../../../app/utils/BoardRenderer.js';
+} from '../../../cli/utils/TerminalBoardRenderer.js';
 
 afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('BoardRenderer', () => {
+describe('TerminalBoardRenderer', () => {
   test('boardToString renders a board', () => {
     const game = new Game();
     const output = boardToString(game.board());

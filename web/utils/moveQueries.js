@@ -1,14 +1,14 @@
-import { singleRoute } from '../../app/utils/route.js';
+import { singleRoute } from '../../cli/utils/moveRoute.js';
 
 /**
  * Shared async legality queries against an engine or engine client.
  * Both Board and Shell can use these to avoid coupling to each other.
  *
- * @param {import('../../app/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
  */
 
 /**
- * @param {import('../../app/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
  * @returns {Promise<Set<string>>}
  */
 export async function movableSquares(engine) {
@@ -17,7 +17,7 @@ export async function movableSquares(engine) {
 }
 
 /**
- * @param {import('../../app/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
  * @param {string} notation
  * @returns {Promise<string[]>}
  */
@@ -29,7 +29,7 @@ export async function targetsFrom(engine, notation) {
 }
 
 /**
- * @param {import('../../app/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
  * @param {string} from
  * @param {string} to
  * @returns {Promise<string[] | null>}

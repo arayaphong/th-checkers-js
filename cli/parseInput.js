@@ -1,6 +1,6 @@
 // Pure input parser for the REPL. Classifies a raw input line into a
 // ParsedInput. It performs only *syntactic* analysis — it does not know the
-// current legal-move list, so semantic validation lives in the Repl.
+// current legal-move list, so semantic validation lives in the Cli.
 
 import { Position } from '../core/Position.js';
 

@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 
-import { Engine } from '../../app/Engine.js';
-import { parseInput } from '../../app/parse.js';
+import { Engine } from '../../cli/Engine.js';
+import { parseInput } from '../../cli/parseInput.js';
 import { App } from '../../web/components/App/App.js';
 import { Board } from '../../web/components/Board/Board.js';
 import { Shell } from '../../web/components/Shell/Shell.js';

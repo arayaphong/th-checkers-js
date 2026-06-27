@@ -136,7 +136,7 @@ export class EngineClient {
 
   /**
    * Send a pre-parsed input object.
-   * @param {import('../../app/parse.js').ParsedInput} parsed
+   * @param {import('../../cli/parseInput.js').ParsedInput} parsed
    */
   handle(parsed) {
     return this.#send('handle', parsed);
@@ -161,10 +161,10 @@ export class EngineClient {
 
   /**
    * Get the serialized engine state.
-   * @returns {Promise<import('../../app/Engine.js').EngineState>}
+   * @returns {Promise<import('../../cli/Engine.js').EngineState>}
    */
   getState() {
-    return /** @type {Promise<import('../../app/Engine.js').EngineState>} */ (this.#send('getState'));
+    return /** @type {Promise<import('../../cli/Engine.js').EngineState>} */ (this.#send('getState'));
   }
 
   /**

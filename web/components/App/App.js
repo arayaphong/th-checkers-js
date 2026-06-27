@@ -14,7 +14,7 @@ import { EngineClient } from '../../utils/EngineClient.js';
 export class App extends Component {
   constructor() {
     super(document.querySelector('#app'));
-    const workerUrl = new URL('../../workers/EngineWorker.js', import.meta.url);
+    const workerUrl = new URL('../../workers/gameWorker.js', import.meta.url);
     this.state = { engine: new EngineClient(workerUrl) };
   }
 

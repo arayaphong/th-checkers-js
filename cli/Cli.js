@@ -1,4 +1,4 @@
-// The interactive REPL loop: render the position, read a line, parse it,
+// The interactive CLI loop: render the position, read a line, parse it,
 // dispatch the action through the UI-neutral Engine, repeat.
 //
 // Input is consumed via readline's async iterator (`for await ... of rl`) rather
@@ -10,8 +10,8 @@ import { createInterface } from 'node:readline';
 import { stdin, stdout } from 'node:process';
 
 import { Engine } from './Engine.js';
-import { parseInput } from './parse.js';
-import { formatMove, formatTrace, renderGame } from './render.js';
+import { parseInput } from './parseInput.js';
+import { formatMove, formatTrace, renderGame } from './terminalRender.js';
 
 const HELP = `Commands:
   <number>          apply the move with that menu number
@@ -31,7 +31,7 @@ Demos (load a preset position):
   demo3             dame loop capture with two mirror-image paths
   demo4             dame loop capture with extra central branching`;
 
-export class Repl {
+export class Cli {
   #engine;
   #rl;
   #output;

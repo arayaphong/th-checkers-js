@@ -1,29 +1,29 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
-import { main } from '../../app/main.js';
+import { main } from '../../cli/cliEntry.js';
 
-describe('app/main.js', () => {
+describe('cli/cliEntry.js', () => {
   test('exits without starting the REPL for an unknown demo id', async () => {
     const originalExitCode = process.exitCode;
     const errors = [];
     const error = jest.spyOn(console, 'error').mockImplementation((message) => errors.push(message));
-    let replConstructed = false;
-    let replStarted = false;
+    let cliConstructed = false;
+    let cliStarted = false;
 
-    class FakeRepl {
+    class FakeCli {
       constructor() {
-        replConstructed = true;
+        cliConstructed = true;
       }
 
       run() {
-        replStarted = true;
+        cliStarted = true;
       }
     }
 
     let didStart;
     let exitCodeAfter;
     try {
-      didStart = await main(['node', 'app/main.js', 'nope'], FakeRepl);
+      didStart = await main(['node', 'cli/cliEntry.js', 'nope'], FakeCli);
       exitCodeAfter = process.exitCode;
     } finally {
       error.mockRestore();
@@ -32,8 +32,8 @@ describe('app/main.js', () => {
 
     expect(didStart).toBe(false);
     expect(exitCodeAfter).toBe(1);
-    expect(replConstructed).toBe(false);
-    expect(replStarted).toBe(false);
+    expect(cliConstructed).toBe(false);
+    expect(cliStarted).toBe(false);
     expect(errors).toContain('Unknown demo: "nope". Available: demo1, demo2, demo3, demo4');
   });
 });

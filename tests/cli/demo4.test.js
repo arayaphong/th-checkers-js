@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { createDemo4Game, explainDemo4 } from '../../app/demo/index.js';
+import { createDemo4Game, explainDemo4 } from '../../cli/demos/index.js';
 
 describe('createDemo4Game', () => {
   test('has multiple branching capture sequences', async () => {

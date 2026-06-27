@@ -1,9 +1,9 @@
 // Rendering for the REPL. Composes the board grid, a status line and the
 // numbered legal-move menu into a single printable string. Kept pure (Game in,
-// string out) so it is easy to unit-test and the Repl stays thin.
+// string out) so it is easy to unit-test and the Cli stays thin.
 
-import { boardToString } from './utils/BoardRenderer.js';
-import { expandRoute } from './utils/route.js';
+import { boardToString } from './utils/TerminalBoardRenderer.js';
+import { expandRoute } from './utils/moveRoute.js';
 import { PieceColor, toStringPieceColor } from '../core/Piece.js';
 
 /**

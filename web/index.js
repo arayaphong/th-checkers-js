@@ -1,4 +1,4 @@
-import { Engine } from '../app/Engine.js';
+import { Engine } from '../cli/Engine.js';
 import { App } from './components/App/App.js';
 import { setTrace } from './utils/Debug.js';
 

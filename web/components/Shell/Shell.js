@@ -1,5 +1,5 @@
-import { parseInput } from '../../../app/parse.js';
-import { formatMove, formatTrace, renderGame } from '../../../app/render.js';
+import { parseInput } from '../../../cli/parseInput.js';
+import { formatMove, formatTrace, renderGame } from '../../../cli/terminalRender.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
 import { EngineClient } from '../../utils/EngineClient.js';
@@ -43,7 +43,7 @@ export class Shell extends Component {
   }
 
   #createEngine() {
-    const workerUrl = new URL('../../workers/EngineWorker.js', import.meta.url);
+    const workerUrl = new URL('../../workers/gameWorker.js', import.meta.url);
     return new EngineClient(workerUrl);
   }
 

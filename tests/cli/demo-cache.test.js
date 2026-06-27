@@ -30,7 +30,7 @@ describe('demo cache', () => {
         text: () => Promise.resolve(demoJson()),
       });
 
-    const { createDemoGame } = await import(`../../app/demo/index.js?retry=${Date.now()}`);
+    const { createDemoGame } = await import(`../../cli/demos/index.js?retry=${Date.now()}`);
 
     await expect(createDemoGame('demo1')).rejects.toThrow('temporary fetch failure');
 

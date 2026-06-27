@@ -8,7 +8,7 @@ import { Position } from '../../core/Position.js';
  * This avoids sending real Game/Board instances across the worker boundary,
  * where structured cloning strips class methods.
  *
- * @param {import('../../app/Engine.js').EngineState} state
+ * @param {import('../../cli/Engine.js').EngineState} state
  */
 export function createGameAdapter(state) {
   return {

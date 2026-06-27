@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { Engine } from '../../app/Engine.js';
-import { createDemo3Game, createDemo4Game } from '../../app/demo/index.js';
+import { Engine } from '../../cli/Engine.js';
+import { createDemo3Game, createDemo4Game } from '../../cli/demos/index.js';
 import { Game } from '../../core/Game.js';
 import { Position } from '../../core/Position.js';
 

@@ -5,8 +5,8 @@
 import { Game } from '../core/Game.js';
 import { PieceColor } from '../core/Piece.js';
 import { Position } from '../core/Position.js';
-import { createDemoGame, DEMO_IDS, explainDemo } from './demo/index.js';
-import { expandRoute } from './utils/route.js';
+import { createDemoGame, DEMO_IDS, explainDemo } from './demos/index.js';
+import { expandRoute } from './utils/moveRoute.js';
 
 const COLOR_NAMES = new Map([
   [PieceColor.WHITE, 'WHITE'],
@@ -118,7 +118,7 @@ export class Engine {
   }
 
   /**
-   * @param {import('./parse.js').ParsedInput} parsed
+   * @param {import('./parseInput.js').ParsedInput} parsed
    */
   async handle(parsed) {
     switch (parsed.kind) {
@@ -142,7 +142,7 @@ export class Engine {
   }
 
   /**
-   * @param {import('./parse.js').CommandName} name
+   * @param {import('./parseInput.js').CommandName} name
    */
   async runCommand(name) {
     switch (name) {

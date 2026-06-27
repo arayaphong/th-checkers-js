@@ -1,9 +1,9 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { expandRoute, singleRoute } from '../../../app/utils/route.js';
+import { expandRoute, singleRoute } from '../../../cli/utils/moveRoute.js';
 import { Game } from '../../../core/Game.js';
 import { Position } from '../../../core/Position.js';
-import { createDemo3Game } from '../../../app/demo/index.js';
+import { createDemo3Game } from '../../../cli/demos/index.js';
 
 /** Build waypoints from algebraic notation, e.g. p('D1', 'B3'). */
 function p(...notations) {

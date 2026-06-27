@@ -2,7 +2,7 @@ import { Position } from '../../../core/Position.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
 import { EngineClient } from '../../utils/EngineClient.js';
-import { movableSquares, targetsFrom, pathFor } from '../../utils/Legals.js';
+import { movableSquares, targetsFrom, pathFor } from '../../utils/moveQueries.js';
 
 /**
  * Board component.
@@ -33,7 +33,7 @@ export class Board extends Component {
   }
 
   #createEngine() {
-    const workerUrl = new URL('../../workers/EngineWorker.js', import.meta.url);
+    const workerUrl = new URL('../../workers/gameWorker.js', import.meta.url);
     return new EngineClient(workerUrl);
   }
 
