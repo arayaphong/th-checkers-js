@@ -17,6 +17,88 @@ function opponentOf(color) {
   return color === PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
 }
 
+// ─── Interchangeable move detection ───
+
+/**
+ * Compute which moves are interchangeable — they share the same from, same to,
+ * and the same unordered set of intermediate squares in their expanded path.
+ * @param {import('../core/Game.js').Move[]} moves
+ * @returns {{ interchangeable: InterchangeableGroup[], moveToGroup: Map<number, number> }}
+ */
+function computeInterchangeable(moves) {
+  /** @type {Map<string, { indices: number[], intermediates: string[] }>} */
+  const groups = new Map();
+
+  moves.forEach((move, index) => {
+    const expanded = expandRoute(move.path);
+    const from = expanded[0].toString();
+    const to = expanded[expanded.length - 1].toString();
+    const intermediates = expanded.slice(1, -1).map((p) => p.toString()).sort();
+    const key = `${from}\u2192${to}:${intermediates.join(',')}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, { indices: [], intermediates });
+    }
+    groups.get(key).indices.push(index);
+  });
+
+  let nextGroupId = 1;
+  /** @type {InterchangeableGroup[]} */
+  const interchangeable = [];
+  /** @type {Map<number, number>} */
+  const moveToGroup = new Map();
+
+  for (const group of groups.values()) {
+    if (group.indices.length >= 2) {
+      for (const idx of group.indices) {
+        moveToGroup.set(idx, nextGroupId);
+      }
+      interchangeable.push({
+        id: nextGroupId,
+        moveNumbers: group.indices.map((i) => i + 1),
+        intermediates: group.intermediates,
+      });
+      nextGroupId++;
+    }
+  }
+
+  return { interchangeable, moveToGroup };
+}
+
+/**
+ * Build a collapsed menu: one entry per group, one entry per ungrouped move.
+ * @param {import('../core/Game.js').Move[]} moves
+ * @param {Map<number, number>} moveToGroup
+ * @returns {CollapsedMenuEntry[]}
+ */
+function buildCollapsedMenu(moves, moveToGroup) {
+  const seenGroups = new Set();
+  /** @type {CollapsedMenuEntry[]} */
+  const menu = [];
+  let displayNum = 1;
+
+  for (let i = 0; i < moves.length; i++) {
+    const groupId = moveToGroup.get(i);
+    if (groupId && seenGroups.has(groupId)) continue;
+    if (groupId) seenGroups.add(groupId);
+
+    const alternates = groupId
+      ? [...moveToGroup.values()].filter((gid) => gid === groupId).length - 1
+      : 0;
+
+    menu.push({
+      displayNumber: displayNum++,
+      actualIndex: i,
+      groupId: groupId ?? null,
+      alternates,
+    });
+  }
+
+  return menu;
+}
+
+// ─── Serialization helpers ───
+
 /**
  * @param {import('../core/Position.js').Position} position
  */
@@ -48,8 +130,9 @@ function serializeBoard(board) {
 /**
  * @param {import('../core/Game.js').Move} move
  * @param {number} index
+ * @param {number|null} [groupId]
  */
-function serializeMove(move, index) {
+function serializeMove(move, index, groupId = null) {
   return {
     index,
     number: index + 1,
@@ -58,6 +141,7 @@ function serializeMove(move, index) {
     captured: move.captured.map(serializePosition),
     path: expandRoute(move.path).map(serializePosition),
     trace: move.trace ? move.trace.toString() : null,
+    groupId,
   };
 }
 
@@ -71,12 +155,16 @@ function capturedKey(move) {
     .join(',');
 }
 
+// ─── Engine class ───
+
 export class Engine {
   #game;
   /** Move indices that were undone, newest last; consumed by redo. */
   #redoStack = [];
   /** Move indices waiting for a user/frontend disambiguation pick. */
   #pendingPick = null;
+  /** Cached collapsed menu from the most recent getState() call. */
+  #collapsedMenu = [];
 
   /**
    * @param {Game} [game]
@@ -100,6 +188,10 @@ export class Engine {
     const player = this.#game.player();
     const winner = moves.length === 0 ? opponentOf(player) : null;
 
+    const { interchangeable, moveToGroup } = computeInterchangeable(moves);
+    const collapsedMenu = buildCollapsedMenu(moves, moveToGroup);
+    this.#collapsedMenu = collapsedMenu;
+
     return {
       board: serializeBoard(board),
       ply: this.#game.getMoveSequence().length,
@@ -107,13 +199,16 @@ export class Engine {
       winner: winner === null ? null : COLOR_NAMES.get(winner),
       gameOver: moves.length === 0,
       legalMoveCount: moves.length,
-      moves: moves.map(serializeMove),
+      moves: moves.map((m, i) => serializeMove(m, i, moveToGroup.get(i) ?? null)),
       moveSequence: this.#game.getMoveSequence(),
       canUndo: this.#game.getMoveSequence().length > 0,
       canRedo: this.#redoStack.length > 0,
       pendingPick: this.#pendingPick
         ? this.#pendingPick.map((index) => serializeMove(moves[index], index))
         : [],
+      interchangeable,
+      collapsedMenu,
+      collapsedCount: collapsedMenu.length,
     };
   }
 
@@ -211,20 +306,21 @@ export class Engine {
   }
 
   /**
-   * Apply a move by its 1-based menu number.
+   * Apply a move by its 1-based collapsed-menu number.
    * @param {number} value
    */
   applyIndex(value) {
-    const moves = this.#game.getMoves();
-    if (!Number.isInteger(value) || value < 1 || value > moves.length) {
+    const menu = this.#collapsedMenu;
+    if (!Number.isInteger(value) || value < 1 || value > menu.length) {
       return {
         kind: 'invalid-index',
         action: 'apply',
         value,
-        legalMoveCount: moves.length,
+        legalMoveCount: menu.length,
       };
     }
-    return this.#commitMove(value - 1, 'apply');
+    const actualIndex = menu[value - 1].actualIndex;
+    return this.#commitMove(actualIndex, 'apply');
   }
 
   /**
@@ -278,9 +374,10 @@ export class Engine {
         legalMoveCount: moves.length,
       };
     }
+    const { moveToGroup } = computeInterchangeable(moves);
     return {
       kind: 'trace',
-      move: serializeMove(moves[value - 1], value - 1),
+      move: serializeMove(moves[value - 1], value - 1, moveToGroup.get(value - 1) ?? null),
     };
   }
 
@@ -303,11 +400,24 @@ export class Engine {
       };
     }
 
+    const matchMoves = matches.map(({ move }) => move);
+    const { interchangeable, moveToGroup } = computeInterchangeable(matchMoves);
+
+    // Remap group moveNumbers from match-local (1-based) to global move numbers
+    const globalNumbers = matches.map(({ index }) => index + 1);
+    const remappedInterchangeable = interchangeable.map((g) => ({
+      ...g,
+      moveNumbers: g.moveNumbers.map((n) => globalNumbers[n - 1]),
+    }));
+
     return {
       kind: 'trace-list',
       from: serializePosition(from),
       to: serializePosition(to),
-      moves: matches.map(({ move, index }) => serializeMove(move, index)),
+      moves: matches.map(({ move, index }, matchIdx) =>
+        serializeMove(move, index, moveToGroup.get(matchIdx) ?? null)
+      ),
+      interchangeable: remappedInterchangeable,
     };
   }
 
@@ -370,3 +480,20 @@ export class Engine {
     }
   }
 }
+
+// ─── Type definitions (JSDoc) ───
+
+/**
+ * @typedef {Object} InterchangeableGroup
+ * @property {number} id - 1-based group identifier
+ * @property {number[]} moveNumbers - 1-based move numbers in this group
+ * @property {string[]} intermediates - sorted intermediate square notations
+ */
+
+/**
+ * @typedef {Object} CollapsedMenuEntry
+ * @property {number} displayNumber - 1-based menu number in collapsed view
+ * @property {number} actualIndex - 0-based index into the full moves array
+ * @property {number|null} groupId - group this entry belongs to, or null
+ * @property {number} alternates - how many other moves are hidden in this group
+ */
