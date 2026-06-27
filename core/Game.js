@@ -122,11 +122,12 @@ export class Game {
         const color = this.player();
         const explorer = new Explorer(board);
 
-        this.#moveableCache = board.getPieces(color)
-            .keys()
-            .map((pos) => [pos, explorer.findValidMoves(pos)])
-            .filter(([, legals]) => !legals.empty())
-            .reduce((moveable, [pos, legals]) => moveable.set(pos, legals), new Map());
+        this.#moveableCache = new Map(
+            board.getPieces(color)
+                .keys()
+                .map((pos) => [pos, explorer.findValidMoves(pos)])
+                .filter(([, legals]) => !legals.empty())
+        );
 
         this.#sortedPositionsCache = this.#moveableCache
             .keys()

@@ -183,19 +183,21 @@ export class Board {
     }
     getPieces(color) {
         assertPieceColor(color);
-        return Position.allValid()
-            .values()
-            .filter((pos) => (this.#occBits & bit(pos.hash())) !== 0)
-            .filter((pos) => (color === PieceColor.BLACK) === this.isBlackPiece(pos))
-            .reduce((pieces, pos) => {
-                const mask = bit(pos.hash());
-                const isBlack = (this.#blackBits & mask) !== 0;
-                const isDame = (this.#dameBits & mask) !== 0;
-                return pieces.set(pos, {
-                    color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
-                    type: isDame ? PieceType.DAME : PieceType.PION,
-                });
-            }, new Map());
+        return new Map(
+            Position.allValid()
+                .values()
+                .filter((pos) => (this.#occBits & bit(pos.hash())) !== 0)
+                .filter((pos) => (color === PieceColor.BLACK) === this.isBlackPiece(pos))
+                .map((pos) => {
+                    const mask = bit(pos.hash());
+                    const isBlack = (this.#blackBits & mask) !== 0;
+                    const isDame = (this.#dameBits & mask) !== 0;
+                    return [pos, {
+                        color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
+                        type: isDame ? PieceType.DAME : PieceType.PION,
+                    }];
+                })
+        );
     }
     // ─── Transformations ───
     promotePiece(pos) {
