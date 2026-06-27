@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { parseInput } from '../../cli/parseInput.js';
+import { parseInput } from '../../cli/parser.js';
 
 describe('parseInput - commands', () => {
   test('recognizes full command names', () => {

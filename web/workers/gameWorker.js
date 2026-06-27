@@ -1,5 +1,5 @@
 import { Engine } from '../../cli/Engine.js';
-import { parseInput } from '../../cli/parseInput.js';
+import { parseInput } from '../../cli/parser.js';
 
 const engine = new Engine();
 
@@ -27,7 +27,7 @@ self.onmessage = async (event) => {
         break;
       }
       case 'handle': {
-        const parsed = /** @type {import('../../cli/parseInput.js').ParsedInput} */ (payload);
+        const parsed = /** @type {import('../../cli/parser.js').ParsedInput} */ (payload);
         result = await engine.handle(parsed);
         break;
       }

@@ -3,7 +3,7 @@
  */
 
 import { Engine } from '../../cli/Engine.js';
-import { parseInput } from '../../cli/parseInput.js';
+import { parseInput } from '../../cli/parser.js';
 import { App } from '../../web/components/App/App.js';
 import { Board } from '../../web/components/Board/Board.js';
 import { Shell } from '../../web/components/Shell/Shell.js';

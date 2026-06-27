@@ -1,5 +1,5 @@
-import { parseInput } from '../../../cli/parseInput.js';
-import { formatMove, formatTrace, renderGame } from '../../../cli/terminalRender.js';
+import { parseInput } from '../../../cli/parser.js';
+import { formatMove, formatTrace, renderGame } from '../../../cli/render.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
 import { EngineClient } from '../../utils/EngineClient.js';

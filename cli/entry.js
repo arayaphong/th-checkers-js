@@ -1,8 +1,8 @@
 // Entry point for the TUI CLI application.
 //
 // Usage:
-//   node cli/cliEntry.js            start a fresh game
-//   node cli/cliEntry.js <demo-id>  start with a demo board (e.g. demo3)
+//   node cli/entry.js            start a fresh game
+//   node cli/entry.js <demo-id>  start with a demo board (e.g. demo3)
 
 import { Game } from '../core/Game.js';
 import { createDemoGame, DEMO_IDS } from './demos/index.js';

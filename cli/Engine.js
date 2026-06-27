@@ -118,7 +118,7 @@ export class Engine {
   }
 
   /**
-   * @param {import('./parseInput.js').ParsedInput} parsed
+   * @param {import('./parser.js').ParsedInput} parsed
    */
   async handle(parsed) {
     switch (parsed.kind) {
@@ -142,7 +142,7 @@ export class Engine {
   }
 
   /**
-   * @param {import('./parseInput.js').CommandName} name
+   * @param {import('./parser.js').CommandName} name
    */
   async runCommand(name) {
     switch (name) {

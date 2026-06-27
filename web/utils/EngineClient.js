@@ -136,7 +136,7 @@ export class EngineClient {
 
   /**
    * Send a pre-parsed input object.
-   * @param {import('../../cli/parseInput.js').ParsedInput} parsed
+   * @param {import('../../cli/parser.js').ParsedInput} parsed
    */
   handle(parsed) {
     return this.#send('handle', parsed);

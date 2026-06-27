@@ -1,8 +1,8 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
-import { main } from '../../cli/cliEntry.js';
+import { main } from '../../cli/main.js';
 
-describe('cli/cliEntry.js', () => {
+describe('cli/main.js', () => {
   test('exits without starting the REPL for an unknown demo id', async () => {
     const originalExitCode = process.exitCode;
     const errors = [];
@@ -23,7 +23,7 @@ describe('cli/cliEntry.js', () => {
     let didStart;
     let exitCodeAfter;
     try {
-      didStart = await main(['node', 'cli/cliEntry.js', 'nope'], FakeCli);
+      didStart = await main(['node', 'cli/main.js', 'nope'], FakeCli);
       exitCodeAfter = process.exitCode;
     } finally {
       error.mockRestore();

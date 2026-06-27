@@ -4,7 +4,7 @@ import { Board } from '../../core/Board.js';
 import { Game } from '../../core/Game.js';
 import { Position } from '../../core/Position.js';
 import { PieceColor, PieceType } from '../../core/Piece.js';
-import { formatMove, formatTrace, renderGame } from '../../cli/terminalRender.js';
+import { formatMove, formatTrace, renderGame } from '../../cli/render.js';
 
 describe('formatMove', () => {
   test('renders a plain move', () => {

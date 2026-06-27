@@ -10,8 +10,8 @@ import { createInterface } from 'node:readline';
 import { stdin, stdout } from 'node:process';
 
 import { Engine } from './Engine.js';
-import { parseInput } from './parseInput.js';
-import { formatMove, formatTrace, renderGame } from './terminalRender.js';
+import { parseInput } from './parser.js';
+import { formatMove, formatTrace, renderGame } from './render.js';
 
 const HELP = `Commands:
   <number>          apply the move with that menu number

@@ -14,7 +14,7 @@
 ```bash
 npm install      # ติดตั้ง dependencies
 npm test         # รันชุดทดสอบทั้งหมด (Jest)
-npm run demo     # รันเดโมบนเทอร์มินัล (node cli/cliEntry.js)
+npm run demo     # รันเดโมบนเทอร์มินัล (node cli/main.js)
 ```
 
 โครงสร้างโค้ดหลักอยู่ใน [`core/`](core/) (เอนจินที่ไม่ผูกกับ UI) และ [`cli/`](cli/) (การแสดงผล/REPL)

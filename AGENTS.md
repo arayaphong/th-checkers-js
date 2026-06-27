@@ -8,9 +8,9 @@ This repo uses an explicit, consistent naming convention:
 |---|---|---|
 | Directories | lowercase | `core/`, `cli/`, `web/`, `web/components/`, `cli/demos/` |
 | Files that export a class | PascalCase matching the class | `Cli.js`, `Engine.js`, `Board.js`, `Game.js` |
-| Files that export functions/utilities | camelCase / descriptive lowercase | `parseInput.js`, `terminalRender.js`, `moveRoute.js`, `moveQueries.js` |
-| Entry points | descriptive lowercase | `cli/cliEntry.js`, `web/index.js` |
-| Test files | match the source file + `.test.js` | `Cli.test.js`, `parseInput.test.js` |
+| Files that export functions/utilities | camelCase / descriptive lowercase | `parser.js`, `render.js`, `moveRoute.js`, `moveQueries.js` |
+| Entry points | descriptive lowercase | `cli/main.js`, `web/index.js` |
+| Test files | match the source file + `.test.js` | `Cli.test.js`, `parser.test.js` |
 | Web component directories | PascalCase matching the component | `web/components/App/`, `Board/`, `Shell/` |
 
 ### Key directories
