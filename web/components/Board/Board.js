@@ -44,6 +44,36 @@ export class Board extends Component {
     }
   }
 
+  #addEventListeners() {
+    this.boardElement.addEventListener('click', (e) => this.#handleBoardEvent(e));
+    this.boardElement.addEventListener('keydown', (e) => this.#handleBoardEvent(e));
+    this.boardElement.addEventListener('focusin', (e) => this.#handleBoardEvent(e));
+    this.boardElement.addEventListener('focusout', (e) => this.#handleBoardEvent(e));
+    this.boardElement.addEventListener('mouseover', (e) => this.#handleBoardEvent(e));
+    this.boardElement.addEventListener('mouseout', (e) => this.#handleBoardEvent(e));
+  }
+
+  async #handleBoardEvent(event) {
+    const cell = event.target.closest('button.cell');
+    if (!cell) return;
+
+    const notation = cell.dataset.notation;
+
+    switch (event.type) {
+      case 'click':
+      case 'keydown': {
+        const pos = Position.fromString(notation);
+        return this.handleCellInteraction(event, pos, cell);
+      }
+      case 'focusin':
+      case 'mouseover':
+        return this.previewPathTo(notation);
+      case 'focusout':
+      case 'mouseout':
+        return this.endPreview();
+    }
+  }
+
   #onEngineResult({ result }) {
     switch (result.kind) {
       case 'state':
@@ -68,6 +98,7 @@ export class Board extends Component {
     await this.loadTemplate(new URL('./Board.html', import.meta.url), '#app');
     this.boardElement = this.container.querySelector('.board');
     this.boardElement.setAttribute('role', 'group');
+    this.#addEventListeners();
     await this.sync();
   }
 
@@ -154,16 +185,27 @@ export class Board extends Component {
   }
 
   async handleCellClick(pos, cell) {
+    return this.handleCellInteraction({ type: 'click' }, pos, cell);
+  }
+
+  async handleCellInteraction(event, pos, cell) {
+    if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.type === 'keydown') {
+      event.preventDefault();
+    }
+
     const notation = pos.toString();
-    trace('board', 'click', notation, { selected: this.selected?.toString() ?? null });
+    trace('board', 'interact', notation, { type: event.type, selected: this.selected?.toString() ?? null });
 
     // First click: only a square the engine reports as movable can be a source.
     if (!this.selected) {
-      if (!this.movable.has(notation)) {
+      if (this.movable.has(notation)) {
+        await this.select(pos, cell);
+      } else {
         trace('board', 'ignore (not movable)', notation);
-        return;
       }
-      await this.select(pos, cell);
       return;
     }
 
@@ -172,10 +214,8 @@ export class Board extends Component {
       trace('board', 'deselect', notation);
       this.clearSelection();
       return;
-    }
-
-    // Click another of your own movable pieces -> switch the selection there.
-    if (this.movable.has(notation)) {
+    } else if (this.movable.has(notation)) {
+      // Click another of your own movable pieces -> switch the selection there.
       trace('board', 'reselect', notation);
       this.clearSelection();
       await this.select(pos, cell);
@@ -188,13 +228,6 @@ export class Board extends Component {
     this.clearSelection();
     trace('board', 'submit move', command);
     await this.engine().command(command);
-  }
-
-  handleCellKeydown(event, pos, cell) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-
-    event.preventDefault();
-    this.handleCellClick(pos, cell);
   }
 
   async sync() {
@@ -237,14 +270,6 @@ export class Board extends Component {
           if (this.movable.has(notation)) {
             cell.classList.add('movable');
           }
-          cell.addEventListener('click', () => this.handleCellClick(pos, cell));
-          cell.addEventListener('keydown', (event) => this.handleCellKeydown(event, pos, cell));
-          // Hover or keyboard-focus a target to preview the path; leaving restores
-          // whatever a `trace` command had pinned.
-          cell.addEventListener('mouseenter', () => this.previewPathTo(notation));
-          cell.addEventListener('mouseleave', () => this.endPreview());
-          cell.addEventListener('focus', () => this.previewPathTo(notation));
-          cell.addEventListener('blur', () => this.endPreview());
         } else {
           cell.setAttribute('aria-hidden', 'true');
         }

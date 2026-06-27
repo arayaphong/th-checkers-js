@@ -1,10 +1,8 @@
-import { singleRoute } from '../../cli/utils/moveRoute.js';
+import { singleRoute } from '../../core/utils/routeUtils.js';
 
 /**
  * Shared async legality queries against an engine or engine client.
  * Both Board and Shell can use these to avoid coupling to each other.
- *
- * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
  */
 
 /**

@@ -6,7 +6,7 @@ import { Game } from '../core/Game.js';
 import { PieceColor } from '../core/Piece.js';
 import { Position } from '../core/Position.js';
 import { createDemoGame, DEMO_IDS, explainDemo } from './demos/index.js';
-import { expandRoute } from './utils/moveRoute.js';
+import { expandRoute } from '../core/utils/routeUtils.js';
 
 const COLOR_NAMES = new Map([
   [PieceColor.WHITE, 'WHITE'],

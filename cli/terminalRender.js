@@ -3,7 +3,7 @@
 // string out) so it is easy to unit-test and the Cli stays thin.
 
 import { boardToString } from './utils/TerminalBoardRenderer.js';
-import { expandRoute } from './utils/moveRoute.js';
+import { expandRoute } from '../core/utils/routeUtils.js';
 import { PieceColor, toStringPieceColor } from '../core/Piece.js';
 
 /**
