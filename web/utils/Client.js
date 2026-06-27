@@ -1,4 +1,4 @@
-import { createGameAdapter } from './GameAdapter.js';
+import { createGameAdapter } from './State.js';
 
 /**
  * Client for the engine Web Worker.

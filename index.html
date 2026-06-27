@@ -21,7 +21,7 @@
     window.addEventListener('unhandledrejection', (e) => write('error', e.reason));
 
     // Patch EngineClient to log sends
-    const orig = await import('./web/utils/EngineClient.js');
+    const orig = await import('./web/utils/Client.js');
     const RealClient = orig.EngineClient;
     const proto = RealClient.prototype;
     const origSend = proto._send ?? proto['#send'];

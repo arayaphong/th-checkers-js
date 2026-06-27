@@ -6,7 +6,7 @@ import { singleRoute } from '../../core/utils/routeUtils.js';
  */
 
 /**
- * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./Client.js').EngineClient} engine
  * @returns {Promise<Set<string>>}
  */
 export async function movableSquares(engine) {
@@ -15,7 +15,7 @@ export async function movableSquares(engine) {
 }
 
 /**
- * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./Client.js').EngineClient} engine
  * @param {string} notation
  * @returns {Promise<string[]>}
  */
@@ -27,7 +27,7 @@ export async function targetsFrom(engine, notation) {
 }
 
 /**
- * @param {import('../../cli/Engine.js').Engine | import('./EngineClient.js').EngineClient} engine
+ * @param {import('../../cli/Engine.js').Engine | import('./Client.js').EngineClient} engine
  * @param {string} from
  * @param {string} to
  * @returns {Promise<string[] | null>}

@@ -2,7 +2,7 @@ import { parseInput } from '../../../cli/parser.js';
 import { formatMove, formatTrace, renderGame } from '../../../cli/render.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
-import { EngineClient } from '../../utils/EngineClient.js';
+import { EngineClient } from '../../utils/Client.js';
 
 const HELP = `Commands:
 \t<number>          apply the move with that menu number
@@ -43,7 +43,7 @@ export class Shell extends Component {
   }
 
   #createEngine() {
-    const workerUrl = new URL('../../workers/gameWorker.js', import.meta.url);
+    const workerUrl = new URL('../../workers/worker.js', import.meta.url);
     return new EngineClient(workerUrl);
   }
 

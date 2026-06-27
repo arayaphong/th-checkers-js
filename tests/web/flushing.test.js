@@ -72,7 +72,7 @@ class MockEngineClient {
   }
 
   async getGame() {
-    const { createGameAdapter } = await import('../../web/utils/GameAdapter.js');
+    const { createGameAdapter } = await import('../../web/utils/State.js');
     return createGameAdapter(this.engine.getState());
   }
 

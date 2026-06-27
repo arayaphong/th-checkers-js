@@ -1,7 +1,7 @@
 import { Component } from '../Component/Component.js';
 import { Board } from '../Board/Board.js';
 import { Shell } from '../Shell/Shell.js';
-import { EngineClient } from '../../utils/EngineClient.js';
+import { EngineClient } from '../../utils/Client.js';
 
 /**
  * Root application component.
@@ -14,7 +14,7 @@ import { EngineClient } from '../../utils/EngineClient.js';
 export class App extends Component {
   constructor() {
     super(document.querySelector('#app'));
-    const workerUrl = new URL('../../workers/gameWorker.js', import.meta.url);
+    const workerUrl = new URL('../../workers/worker.js', import.meta.url);
     this.state = { engine: new EngineClient(workerUrl) };
   }
 
