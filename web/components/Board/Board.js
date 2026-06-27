@@ -1,19 +1,24 @@
 import { Position } from '../../../core/Position.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
+import { EngineClient } from '../../utils/EngineClient.js';
+import { movableSquares, targetsFrom, pathFor } from '../../utils/Legals.js';
 
 /**
  * Board component.
  *
- * Renders the engine's board snapshot and asks the shell what is legal
- * (movableSquares / targetsFrom / pathFor). It never decides legality itself —
- * every move is handed to the shell as a command for it to validate.
+ * Renders the engine's board snapshot and queries legality through an engine
+ * or EngineClient. It can run standalone (spawning its own worker) or share an
+ * EngineClient with a Shell component via the `engine` option.
+ *
+ * The Board never decides legality itself and never handles disambiguation UI;
+ * it simply sends raw coordinate commands to the engine and re-renders whenever
+ * the engine reports a new state.
  */
 export class Board extends Component {
-  constructor(container, state, shell) {
+  constructor(container, options = {}) {
     super(container);
-    this.state = state;
-    this.shell = shell;
+    this.state = { engine: options.engine ?? this.#createEngine() };
 
     this.boardElement = null;
     this.cellByNotation = new Map();
@@ -23,13 +28,51 @@ export class Board extends Component {
     // Squares highlighted by a `trace` command; kept so a transient hover preview
     // can restore them when the pointer leaves.
     this.stickyPath = [];
+
+    this.unsubscribe = this.state.engine.subscribe?.((message) => this.#onEngineResult(message));
+  }
+
+  #createEngine() {
+    const workerUrl = new URL('../../workers/EngineWorker.js', import.meta.url);
+    return new EngineClient(workerUrl);
+  }
+
+  destroy() {
+    this.unsubscribe?.();
+    if (this.state.engine instanceof EngineClient) {
+      this.state.engine.terminate();
+    }
+  }
+
+  #onEngineResult({ result }) {
+    switch (result.kind) {
+      case 'state':
+      case 'demo':
+      case 'quit':
+        this.sync();
+        break;
+      case 'trace':
+        this.highlightPath(result.move.path.map((cell) => cell.notation));
+        break;
+      case 'trace-list':
+        this.highlightPath(
+          result.moves.length === 1 ? result.moves[0].path.map((cell) => cell.notation) : [],
+        );
+        break;
+      default:
+        break;
+    }
   }
 
   async mount() {
-    await this.loadTemplate(new URL('./Board.html', import.meta.url));
+    await this.loadTemplate(new URL('./Board.html', import.meta.url), '#app');
     this.boardElement = this.container.querySelector('.board');
     this.boardElement.setAttribute('role', 'group');
-    this.sync();
+    await this.sync();
+  }
+
+  engine() {
+    return this.state.engine;
   }
 
   paintPath(notations) {
@@ -42,10 +85,10 @@ export class Board extends Component {
   }
 
   // Preview the continuous path from the selected source to the hovered/focused
-  // target, but only when the shell reports a single unambiguous route.
-  previewPathTo(notation) {
+  // target, but only when the engine reports a single unambiguous route.
+  async previewPathTo(notation) {
     if (!this.selected) return;
-    const cells = this.shell.pathFor(this.selected.toString(), notation);
+    const cells = await pathFor(this.engine(), this.selected.toString(), notation);
     this.paintPath(cells ?? this.stickyPath);
   }
 
@@ -53,7 +96,7 @@ export class Board extends Component {
     this.paintPath(this.stickyPath);
   }
 
-  // Pin a path on the board (driven by a `trace` command in the shell).
+  // Pin a path on the board (driven by a `trace` command anywhere in the app).
   highlightPath(notations) {
     this.stickyPath = notations ?? [];
     this.paintPath(this.stickyPath);
@@ -83,7 +126,7 @@ export class Board extends Component {
     }
   }
 
-  select(pos, cell) {
+  async select(pos, cell) {
     // Starting a new move intent retires any pinned trace highlight.
     this.clearPath();
     this.selected = pos;
@@ -91,7 +134,7 @@ export class Board extends Component {
     cell.classList.add('selected');
     cell.setAttribute('aria-pressed', 'true');
     cell.setAttribute('aria-label', `${cell.dataset.label}, selected`);
-    const targets = this.shell.targetsFrom(pos.toString());
+    const targets = await targetsFrom(this.engine(), pos.toString());
     for (const target of targets) {
       const targetCell = this.cellByNotation.get(target);
       targetCell?.classList.add('hint');
@@ -110,17 +153,17 @@ export class Board extends Component {
     this.selectedCell = null;
   }
 
-  handleCellClick(pos, cell) {
+  async handleCellClick(pos, cell) {
     const notation = pos.toString();
     trace('board', 'click', notation, { selected: this.selected?.toString() ?? null });
 
-    // First click: only a square the shell reports as movable can be a source.
+    // First click: only a square the engine reports as movable can be a source.
     if (!this.selected) {
       if (!this.movable.has(notation)) {
         trace('board', 'ignore (not movable)', notation);
         return;
       }
-      this.select(pos, cell);
+      await this.select(pos, cell);
       return;
     }
 
@@ -135,15 +178,16 @@ export class Board extends Component {
     if (this.movable.has(notation)) {
       trace('board', 'reselect', notation);
       this.clearSelection();
-      this.select(pos, cell);
+      await this.select(pos, cell);
       return;
     }
 
-    // Otherwise treat it as the destination and let the shell validate/apply it.
+    // Otherwise treat it as the destination and hand it to the engine as a raw
+    // command. The worker will broadcast the result to all clients.
     const command = `${this.selected.toString()} ${notation}`;
     this.clearSelection();
     trace('board', 'submit move', command);
-    this.shell.submitCommand(command);
+    await this.engine().command(command);
   }
 
   handleCellKeydown(event, pos, cell) {
@@ -153,15 +197,15 @@ export class Board extends Component {
     this.handleCellClick(pos, cell);
   }
 
-  sync() {
+  async sync() {
     this.selected = null;
     this.selectedCell = null;
     this.stickyPath = [];
     this.cellByNotation.clear();
-    this.movable = this.shell.movableSquares();
+    this.movable = await movableSquares(this.engine());
     trace('board', 'render', { movable: [...this.movable] });
 
-    const board = this.state.engine.getGame().board();
+    const board = (await this.engine().getGame()).board();
     const cells = [];
 
     for (let row = 0; row < Position.BOARD_SIZE; row++) {

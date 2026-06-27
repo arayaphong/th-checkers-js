@@ -1,11 +1,37 @@
-<section class="hero">
-  <h1>Thai Checkers</h1>
-</section>
+<!doctype html>
+<html lang="th">
 
-<section class="workspace" aria-label="Thai Checkers workspace">
-  <div class="play-stage">
-    <div data-board-root></div>
-  </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thai Checkers</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css" />
+  <link rel="stylesheet" href="./App.css" />
+  <link rel="stylesheet" href="../Board/Board.css" />
+  <link rel="stylesheet" href="../Shell/Shell.css" />
+</head>
 
-  <div data-shell-root></div>
-</section>
+<body data-bs-theme="dark">
+  <main id="app">
+    <section class="hero">
+      <h1>Thai Checkers</h1>
+    </section>
+
+    <section class="workspace" aria-label="Thai Checkers workspace">
+      <div class="play-stage">
+        <div data-board-root></div>
+      </div>
+
+      <div data-shell-root></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { App } from './App.js';
+
+    const app = new App();
+    await app.mount();
+  </script>
+</body>
+
+</html>

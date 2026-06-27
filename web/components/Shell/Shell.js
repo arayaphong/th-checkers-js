@@ -1,8 +1,8 @@
 import { parseInput } from '../../../app/parse.js';
 import { formatMove, formatTrace, renderGame } from '../../../app/render.js';
-import { singleRoute } from '../../../app/utils/route.js';
 import { Component } from '../Component/Component.js';
 import { trace } from '../../utils/Debug.js';
+import { EngineClient } from '../../utils/EngineClient.js';
 
 const HELP = `Commands:
 \t<number>          apply the move with that menu number
@@ -25,22 +25,42 @@ Demos:
 /**
  * Shell component.
  *
- * Provides the REPL interface, drives the engine, and answers legality queries
- * for the board. The board is supplied after construction via `setBoard()` to
- * break the circular dependency between the two components.
+ * Provides the REPL interface and drives the engine through an EngineClient
+ * that talks to a Web Worker. It can run standalone (spawning its own worker)
+ * or share an EngineClient with a Board component via the `engine` option.
+ *
+ * The Shell subscribes to every result broadcast by the worker, so commands
+ * issued from the Board (or any other client) are echoed and rendered here.
  */
 export class Shell extends Component {
-  constructor(container, state) {
+  constructor(container, options = {}) {
     super(container);
-    this.state = state;
-    this.board = null;
+    this.state = { engine: options.engine ?? this.#createEngine() };
     this.pending = false;
     this.activeDemo = null;
+
+    this.unsubscribe = this.state.engine.subscribe?.((message) => this.#onEngineResult(message));
+  }
+
+  #createEngine() {
+    const workerUrl = new URL('../../workers/EngineWorker.js', import.meta.url);
+    return new EngineClient(workerUrl);
+  }
+
+  destroy() {
+    this.unsubscribe?.();
+    if (this.state.engine instanceof EngineClient) {
+      this.state.engine.terminate();
+    }
+  }
+
+  async #onEngineResult({ raw, result, isPick }) {
+    this.appendPrompt(raw, isPick);
+    await this.renderResult(result);
   }
 
   async mount() {
-    await this.loadTemplate(new URL('./Shell.html', import.meta.url));
-
+    await this.loadTemplate(new URL('./Shell.html', import.meta.url), '#app');
     this.output = this.container.querySelector('#output');
     this.statusLine = this.container.querySelector('#status-line');
     this.form = this.container.querySelector('#command-form');
@@ -67,20 +87,16 @@ export class Shell extends Component {
     }
   }
 
-  setBoard(board) {
-    this.board = board;
-  }
-
-  start() {
-    this.appendBlock(renderGame(this.engine().getGame()));
-    this.appendBlock(HELP);
-    this.board?.sync();
-    this.syncPrompt();
-    this.input.focus();
-  }
-
   engine() {
     return this.state.engine;
+  }
+
+  async start() {
+    this.appendPrompt();
+    this.appendBlock(renderGame(await this.engine().getGame()));
+    this.appendBlock(HELP);
+    this.syncPrompt(await this.engine().getState());
+    this.input.focus();
   }
 
   setControlsDisabled(disabled) {
@@ -91,32 +107,8 @@ export class Shell extends Component {
     }
   }
 
-  moveAt(index) {
-    return this.engine().getGame().getMoves()[index];
-  }
-
-  // --- Legality queries the board UI relies on (single source of truth) ---
-  movableSquares() {
-    const froms = new Set(this.engine().getGame().getMoves().map((move) => move.from.toString()));
-    trace('shell', 'movableSquares', [...froms]);
-    return froms;
-  }
-
-  targetsFrom(notation) {
-    const targets = this.engine().getGame().getMoves()
-      .filter((move) => move.from.toString() === notation)
-      .map((move) => move.to.toString());
-    trace('shell', 'targetsFrom', notation, targets);
-    return targets;
-  }
-
-  // The continuous path the board highlights, or null when from -> to is not a
-  // single unambiguous route (no such move, or several mirror-image paths).
-  pathFor(from, to) {
-    const route = singleRoute(this.engine().getGame().getMoves(), from, to);
-    const cells = route ? route.map((pos) => pos.toString()) : null;
-    trace('shell', 'pathFor', `${from} -> ${to}`, cells);
-    return cells;
+  async moveAt(index) {
+    return (await this.engine().getGame()).getMoves()[index];
   }
 
   appendBlock(text = '') {
@@ -124,8 +116,9 @@ export class Shell extends Component {
     this.output.scrollTop = this.output.scrollHeight;
   }
 
-  appendPrompt(raw) {
-    this.appendBlock(`${this.engine().isPickingMove() ? 'Pick a number:' : '>'} ${raw}`);
+  appendPrompt(raw, isPick) {
+    const prefix = isPick ? 'Pick a number:' : '>';
+    this.appendBlock(`${prefix} ${raw ?? ''}`);
   }
 
   clearConsole() {
@@ -139,26 +132,24 @@ export class Shell extends Component {
     this.statusLine.classList.toggle('error', isError);
   }
 
-  syncPrompt() {
-    this.promptLabel.textContent = this.engine().isPickingMove() ? 'Pick a number:' : '>';
+  syncPrompt(state) {
+    this.promptLabel.textContent = state.pendingPick.length > 0 ? 'Pick a number:' : '>';
     for (const button of this.shortcutButtons) {
       button.classList.toggle('active', button.dataset.command === this.activeDemo);
     }
   }
 
-  renderResult(result) {
+  async renderResult(result) {
     switch (result.kind) {
       case 'state':
         if (result.action !== 'moves') this.activeDemo = null;
-        this.board?.sync();
-        this.appendBlock(renderGame(this.engine().getGame()));
+        this.appendBlock(renderGame(await this.engine().getGame()));
         this.setStatus(`Action: ${result.action}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'demo':
         this.activeDemo = result.id;
-        this.board?.sync();
         this.appendBlock(result.description);
-        this.appendBlock(renderGame(this.engine().getGame()));
+        this.appendBlock(renderGame(await this.engine().getGame()));
         this.setStatus(`Loaded ${result.id}. ${result.state.legalMoveCount} legal move(s).`);
         break;
       case 'help':
@@ -176,24 +167,23 @@ export class Shell extends Component {
       case 'pick-required':
         this.appendBlock(`Multiple moves match ${result.from.notation} -> ${result.to.notation}:`);
         for (const [index, choice] of result.choices.entries()) {
-          this.appendBlock(`  ${index + 1}) ${formatMove(this.moveAt(choice.index))}`);
+          const move = await this.moveAt(choice.index);
+          const captures = move.captured.length > 0
+            ? ` [x ${move.captured.map((c) => c.toString()).join(',')}]`
+            : '';
+          this.appendBlock(`  ${index + 1}) ${move.from.toString()} -> ${move.to.toString()}${captures}`);
         }
         this.setStatus('Multiple matching moves. Pick a number to continue.');
         break;
       case 'trace':
-        this.appendBlock(formatTrace(this.moveAt(result.move.index)));
-        this.board?.highlightPath(result.move.path.map((cell) => cell.notation));
+        this.appendBlock(formatTrace(await this.moveAt(result.move.index)));
         this.setStatus(`Trace for move #${result.move.number}.`);
         break;
       case 'trace-list':
         this.appendBlock(`Trace(s) for ${result.from.notation} -> ${result.to.notation}:`);
         for (const [index, move] of result.moves.entries()) {
-          this.appendBlock(`  ${index + 1}) ${formatTrace(this.moveAt(move.index))}`);
+          this.appendBlock(`  ${index + 1}) ${formatTrace(await this.moveAt(move.index))}`);
         }
-        // Only a single unambiguous route is highlighted; mirror-image paths are not.
-        this.board?.highlightPath(
-          result.moves.length === 1 ? result.moves[0].path.map((cell) => cell.notation) : [],
-        );
         this.setStatus(`Found ${result.moves.length} trace(s).`);
         break;
       case 'empty-history':
@@ -224,21 +214,21 @@ export class Shell extends Component {
           this.setStatus('Move failed.', true);
         }
         break;
-      case 'quit':
+      case 'quit': {
         this.activeDemo = null;
-        this.state.engine = new this.state.engine.constructor();
-        this.board?.sync();
+        await this.engine().newGame();
         this.appendBlock('Bye.');
-        this.appendBlock(renderGame(this.engine().getGame()));
+        this.appendBlock(renderGame(await this.engine().getGame()));
         this.setStatus('Session reset to a fresh board.');
         break;
+      }
       case 'noop':
         this.setStatus('No operation.');
         break;
       default:
         break;
     }
-    this.syncPrompt();
+    this.syncPrompt(await this.engine().getState());
   }
 
   async submitCommand(raw) {
@@ -247,19 +237,26 @@ export class Shell extends Component {
       return;
     }
 
+    const trimmed = raw.trim();
+    if (trimmed === '') {
+      this.input.focus();
+      return;
+    }
+
     this.pending = true;
     this.setControlsDisabled(true);
-    const picking = this.engine().isPickingMove();
-    trace('shell', 'submit', { raw, picking });
+    const state = await this.engine().getState();
+    const picking = state.pendingPick.length > 0;
+    trace('shell', 'submit', { raw: trimmed, picking });
 
     try {
-      this.appendPrompt(raw);
-      const currentEngine = this.engine();
-      const result = picking
-        ? currentEngine.resolvePick(raw)
-        : await currentEngine.handle(parseInput(raw));
-      trace('shell', 'result', result.kind, result);
-      this.renderResult(result);
+      if (picking) {
+        await this.engine().resolvePick(trimmed);
+      } else {
+        await this.engine().command(trimmed);
+      }
+      // Rendering is handled by the subscription callback so Board commands are
+      // also echoed here.
     } catch (error) {
       trace('shell', 'unexpected error', error);
       this.appendBlock(`Unexpected error: ${error.message}`);

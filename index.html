@@ -13,8 +13,43 @@
 
 <body data-bs-theme="dark">
   <main id="app"></main>
+  <pre id="debug-log" style="position:fixed;bottom:0;left:0;right:0;background:#111;color:#0f0;padding:10px;max-height:200px;overflow:auto;z-index:9999;font-size:12px"></pre>
 
-  <script type="module" src="./web/index.js"></script>
+  <script type="module">
+    const log = document.getElementById('debug-log');
+    function write(msg) {
+      log.textContent += msg + '\n';
+    }
+    window.addEventListener('error', (e) => write('ERROR: ' + e.message));
+    window.addEventListener('unhandledrejection', (e) => write('REJECTION: ' + e.reason));
+
+    // Patch EngineClient to log sends
+    const orig = await import('./web/utils/EngineClient.js');
+    const RealClient = orig.EngineClient;
+    const proto = RealClient.prototype;
+    const origSend = proto._send ?? proto['#send'];
+    // Private methods can't be patched easily; instead patch postMessage usage by observing worker creation
+    const origWorker = globalThis.Worker;
+    globalThis.Worker = class extends origWorker {
+      constructor(url, options) {
+        super(url, options);
+        write('WORKER created: ' + url);
+        this.addEventListener('message', (e) => write('WORKER -> main: ' + JSON.stringify(e.data).slice(0, 200)));
+        const originalPostMessage = this.postMessage.bind(this);
+        this.postMessage = (msg) => {
+          write('main -> WORKER: ' + JSON.stringify(msg).slice(0, 200));
+          return originalPostMessage(msg);
+        };
+      }
+    };
+
+    try {
+      await import('./web/index.js');
+      write('web/index.js loaded');
+    } catch (e) {
+      write('IMPORT FAILED: ' + e.message);
+    }
+  </script>
 </body>
 
 </html>

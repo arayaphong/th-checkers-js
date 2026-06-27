@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thai Checkers</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css" />
+  <link rel="stylesheet" href="./web/components/App/App.css" />
+  <link rel="stylesheet" href="./web/components/Board/Board.css" />
+  <link rel="stylesheet" href="./web/components/Shell/Shell.css" />
+</head>
+
+<body data-bs-theme="dark">
+  <main id="app"></main>
+
+  <script type="module" src="./web/index.js"></script>
+</body>
+
+</html>

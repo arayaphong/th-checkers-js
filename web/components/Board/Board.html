@@ -1,27 +1,52 @@
-<section class="play-board-shell" aria-label="Play board">
-  <div class="board-layout">
-    <div class="axis axis-col" aria-hidden="true">
-      <span>A</span>
-      <span>B</span>
-      <span>C</span>
-      <span>D</span>
-      <span>E</span>
-      <span>F</span>
-      <span>G</span>
-      <span>H</span>
-    </div>
-    <div class="board-main">
-      <div class="axis axis-row" aria-hidden="true">
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>4</span>
-        <span>5</span>
-        <span>6</span>
-        <span>7</span>
-        <span>8</span>
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thai Checkers — Board</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css" />
+  <link rel="stylesheet" href="../App/App.css" />
+  <link rel="stylesheet" href="./Board.css" />
+</head>
+
+<body data-bs-theme="dark">
+  <main id="app">
+    <section class="play-board-shell" aria-label="Play board">
+      <div class="board-layout">
+        <div class="axis axis-col" aria-hidden="true">
+          <span>A</span>
+          <span>B</span>
+          <span>C</span>
+          <span>D</span>
+          <span>E</span>
+          <span>F</span>
+          <span>G</span>
+          <span>H</span>
+        </div>
+        <div class="board-main">
+          <div class="axis axis-row" aria-hidden="true">
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+            <span>6</span>
+            <span>7</span>
+            <span>8</span>
+          </div>
+          <div class="board" aria-label="Thai Checkers board"></div>
+        </div>
       </div>
-      <div class="board" aria-label="Thai Checkers board"></div>
-    </div>
-  </div>
-</section>
+    </section>
+  </main>
+
+  <script type="module">
+    import { Board } from './Board.js';
+
+    const board = new Board(document.querySelector('#app'));
+    await board.mount();
+  </script>
+</body>
+
+</html>
