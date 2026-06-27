@@ -38,10 +38,15 @@ export function formatTrace(move) {
 
 /**
  * Render the full display: board, status line and numbered move menu (or game-over).
+ * When `state` is provided and contains `collapsedMenu`, the move list is
+ * collapsed — one representative per interchangeable group, with a note about
+ * alternate variants.
+ *
  * @param {import('../core/Game.js').Game} game
+ * @param {object} [state] - Optional engine state with collapsedMenu / interchangeable
  * @returns {string}
  */
-export function renderGame(game) {
+export function renderGame(game, state = null) {
   const moves = game.getMoves();
   const ply = game.getMoveSequence().length;
   const lines = [];
@@ -55,6 +60,36 @@ export function renderGame(game) {
     return lines.join('\n');
   }
 
+  // ── Collapsed menu (when engine state provides grouping) ──
+  if (state?.collapsedMenu && state.collapsedMenu.length > 0) {
+    const collapsed = state.collapsedMenu;
+    lines.push(
+      `Ply ${ply} — ${toStringPieceColor(game.player())} to move. ${collapsed.length} group(s) (${moves.length} total):`
+    );
+
+    for (const entry of collapsed) {
+      const move = moves[entry.actualIndex];
+      const altNote =
+        entry.alternates > 0
+          ? `  (~ ${entry.alternates} alternate variant${entry.alternates > 1 ? 's' : ''})`
+          : '';
+      lines.push(`  ${entry.displayNumber}) ${formatMove(move)}${altNote}`);
+    }
+
+    // If there are interchangeable groups, print a legend
+    if (state.interchangeable && state.interchangeable.length > 0) {
+      lines.push('');
+      lines.push('Interchangeable groups (same intermediate squares):');
+      for (const group of state.interchangeable) {
+        const mid = group.intermediates.length > 0 ? group.intermediates.join(', ') : '(none)';
+        lines.push(`  Group ${group.id}: moves [${group.moveNumbers.join(', ')}]  intermediates: {${mid}}`);
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  // ── Fallback: classic full move list ──
   lines.push(`Ply ${ply} — ${toStringPieceColor(game.player())} to move. ${moves.length} legal move(s):`);
   moves.forEach((move, i) => {
     lines.push(`  ${i + 1}) ${formatMove(move)}`);
