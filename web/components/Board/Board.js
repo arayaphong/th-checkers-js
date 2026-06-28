@@ -204,7 +204,7 @@ export class Board extends Component {
     this.contextMenu.replaceChildren();
     for (const [itemIndex, { index, move }] of choices.entries()) {
       const pathNotations = expandRoute(move.path).map((pos) => pos.toString());
-      const pathText = pathNotations.join(' → ');
+      const pathText = pathNotations.join(' \u2192 ');
       const captureCount = move.captured.length;
       const label = `${itemIndex + 1}) Route (x${captureCount})`;
       const item = document.createElement('button');
@@ -318,6 +318,15 @@ export class Board extends Component {
       return;
     }
 
+    // Ambiguous destinations (including loop-back moves like D1\u2192D1) open a
+    // context menu so the user can pick the exact route. Check before deselect
+    // so clicking the same square does not cancel a valid ambiguous target.
+    if (cell.classList.contains('ambiguous')) {
+      event.stopPropagation();
+      this.#showContextMenu(notation, cell);
+      return;
+    }
+
     // Click the same square again -> deselect.
     if (this.selected.equals(pos)) {
       trace('board', 'deselect', notation);
@@ -328,14 +337,6 @@ export class Board extends Component {
       trace('board', 'reselect', notation);
       this.clearSelection();
       await this.select(pos, cell);
-      return;
-    }
-
-    // Ambiguous destinations open a context menu so the user can pick the exact
-    // route; unambiguous destinations are submitted as a normal coordinate move.
-    if (cell.classList.contains('ambiguous')) {
-      event.stopPropagation();
-      this.#showContextMenu(notation, cell);
       return;
     }
 
